@@ -1,3 +1,7 @@
+import { loadedEnvFile } from './config/load-env';
+
+console.log(`Environment: ${process.env.NODE_ENV || 'production'} (${loadedEnvFile})`);
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';

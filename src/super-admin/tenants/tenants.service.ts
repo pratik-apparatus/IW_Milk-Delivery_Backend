@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -28,6 +29,10 @@ import { UpdateTenantAppsDto } from './dto/update-tenant-apps.dto';
 import { UpdateTenantStatusDto } from './dto/update-tenant-status.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantLifecycleEventType } from './tenant.events';
+import {
+  normalizeIntegrationConfig,
+  parseEnabledApps,
+} from './tenant-config.util';
 
 @Injectable()
 export class TenantsService {
@@ -57,13 +62,19 @@ export class TenantsService {
     }
 
     const tenant = this.tenantRepo.create({
-      ...payload,
+      businessName: payload.businessName,
+      subdomain: payload.subdomain,
       status: TenantStatus.INACTIVE,
-      enabledApps: payload.enabledApps || [],
+      enabledApps: parseEnabledApps(payload.enabledApps),
       appSettings: payload.appSettings || {},
-      integrationConfig: payload.integrationConfig || {},
+      integrationConfig: normalizeIntegrationConfig(payload.integrationConfig),
+      adminAddress: payload.adminAddress,
+      adminLatitude: payload.adminLatitude,
+      adminLongitude: payload.adminLongitude,
+      deliveryRadiusKm: payload.deliveryRadiusKm,
       suspensionReason: null,
       logoUrl: payload.logoUrl || null,
+      adminEmail: payload.adminEmail,
       supportEmail: payload.supportEmail || null,
       supportPhone: payload.supportPhone || null,
       dbHost: payload.dbHost || this.configService.get('DB_HOST') || null,
@@ -136,7 +147,25 @@ export class TenantsService {
       }
     }
 
-    Object.assign(tenant, payload);
+    const { enabledApps, integrationConfig, ...rest } = payload;
+
+    Object.assign(tenant, rest);
+
+    if (enabledApps !== undefined) {
+      tenant.enabledApps = parseEnabledApps(enabledApps);
+    }
+
+    if (integrationConfig !== undefined) {
+      const existing = (tenant.integrationConfig || {}) as Record<string, unknown>;
+      const existingRazorpay = (existing.razorpay || {}) as Record<string, unknown>;
+      tenant.integrationConfig = normalizeIntegrationConfig({
+        razorpay: {
+          ...existingRazorpay,
+          ...integrationConfig.razorpay,
+        },
+      });
+    }
+
     const updated = await this.tenantRepo.save(tenant);
     this.emitTenantEvent(TenantLifecycleEventType.TENANT_UPDATED, updated.id);
     return this.sanitizeTenant(updated);
@@ -165,7 +194,7 @@ export class TenantsService {
       throw new NotFoundException('Tenant not found');
     }
 
-    tenant.enabledApps = payload.enabledApps;
+    tenant.enabledApps = parseEnabledApps(payload.enabledApps);
     if (payload.appSettings) {
       tenant.appSettings = payload.appSettings;
     }
@@ -207,6 +236,40 @@ export class TenantsService {
       message: 'Tenant decommissioned successfully',
       tenantId: id,
       deactivatedUsers: tenantUsers.length,
+    };
+  }
+
+  async restoreTenant(id: string) {
+    const tenant = await this.tenantRepo.findOne({ where: { id } });
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+    if (!tenant.deletedAt) {
+      throw new BadRequestException('Tenant is not decommissioned');
+    }
+
+    tenant.deletedAt = null;
+    tenant.suspensionReason = null;
+    if (tenant.status === TenantStatus.INACTIVE) {
+      tenant.status = TenantStatus.ACTIVE;
+    }
+
+    const tenantUsers = await this.userRepo.find({ where: { tenantId: id } });
+    for (const user of tenantUsers) {
+      user.isActive = true;
+      await this.userRepo.save(user);
+    }
+
+    const restored = await this.tenantRepo.save(tenant);
+    this.emitTenantEvent(TenantLifecycleEventType.TENANT_UPDATED, restored.id, {
+      restored: true,
+      reactivatedUsers: tenantUsers.length,
+    });
+
+    return {
+      message: 'Tenant restored successfully',
+      tenant: this.sanitizeTenant(restored),
+      reactivatedUsers: tenantUsers.length,
     };
   }
 
@@ -291,6 +354,12 @@ export class TenantsService {
       management: {
         totalEnabledApps: tenant.enabledApps.length,
         appKeys: Object.keys(tenant.appSettings || {}),
+        deliveryZone: {
+          adminAddress: tenant.adminAddress,
+          adminLatitude: tenant.adminLatitude,
+          adminLongitude: tenant.adminLongitude,
+          deliveryRadiusKm: tenant.deliveryRadiusKm,
+        },
         hasDbConfig: Boolean(
           tenant.dbHost && tenant.dbPort && tenant.dbName && tenant.dbUser,
         ),

@@ -7,6 +7,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
 import { TenantMatchGuard } from './tenant-match.guard';
 import { AdminTenantResolverGuard } from './admin-tenant-resolver.guard';
+import { AdminSubscriptionGuard } from './admin-subscription.guard';
 
 @Global()
 @Module({
@@ -29,6 +30,7 @@ import { AdminTenantResolverGuard } from './admin-tenant-resolver.guard';
         RolesGuard,
         TenantMatchGuard,
         AdminTenantResolverGuard,
+        AdminSubscriptionGuard,
     ],
     exports: [
         PassportModule,
@@ -37,6 +39,7 @@ import { AdminTenantResolverGuard } from './admin-tenant-resolver.guard';
         RolesGuard,
         TenantMatchGuard,
         AdminTenantResolverGuard,
+        AdminSubscriptionGuard,
     ],
 })
 export class AuthModule { }

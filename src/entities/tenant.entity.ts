@@ -35,6 +35,19 @@ export class Tenant {
   @Column({ type: 'varchar', nullable: true })
   supportPhone: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  adminAddress: string | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  adminLatitude: number | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  adminLongitude: number | null;
+
+  /** Delivery service area radius from admin location, in kilometers. */
+  @Column({ type: 'decimal', precision: 8, scale: 2, nullable: true })
+  deliveryRadiusKm: number | null;
+
   @Column({
     type: 'enum',
     enum: TenantStatus,

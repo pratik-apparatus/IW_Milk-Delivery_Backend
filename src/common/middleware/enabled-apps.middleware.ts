@@ -7,10 +7,11 @@ import { NextFunction, Request, Response } from 'express';
 import { Tenant } from '../../entities/tenant.entity';
 
 const ROUTE_APP_MAP: Array<{ prefix: string; app: string }> = [
+  { prefix: '/admin/subscriptions', app: 'SUBSCRIPTIONS_MODULE' },
+  { prefix: '/subscriptions', app: 'SUBSCRIPTIONS_MODULE' },
   { prefix: '/admin/', app: 'ADMIN_APP' },
   { prefix: '/customer/', app: 'CUSTOMER_APP' },
   { prefix: '/delivery/', app: 'DELIVERY_APP' },
-  { prefix: '/subscriptions', app: 'CUSTOMER_APP' },
   { prefix: '/payments/', app: 'CUSTOMER_APP' },
 ];
 

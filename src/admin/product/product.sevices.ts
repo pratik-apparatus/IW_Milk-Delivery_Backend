@@ -23,6 +23,7 @@ export class ProductService {
     const product = productRepo.create({
       ...dto,
       images: dto.images ? dto.images : [],
+      remainingQuantity: dto.quantity,
       tenantId: dedicated ? null : tenantId,
     });
     return productRepo.save(product);
@@ -93,11 +94,16 @@ export class ProductService {
   }
 
   async update(id: string, dto: Partial<CreateProductDto>) {
-    await this.findById(id);
+    const existing = await this.findById(id);
 
-    const updateData: any = { ...dto };
+    const updateData: Partial<Product> = { ...dto };
     if (dto.images !== undefined) {
       updateData.images = dto.images;
+    }
+
+    if (dto.quantity !== undefined && dto.quantity !== existing.quantity) {
+      const delta = dto.quantity - existing.quantity;
+      updateData.remainingQuantity = Math.max(0, existing.remainingQuantity + delta);
     }
 
     const tenantId = this.tenantContext.requireTenantId();

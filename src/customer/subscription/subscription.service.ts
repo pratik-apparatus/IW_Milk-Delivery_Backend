@@ -119,9 +119,10 @@ export class SubscriptionService {
     const totalQuantityNeeded = totalDeliveries * quantity;
 
     // Check if product has enough quantity for the entire subscription duration
-    if (product.quantity < totalQuantityNeeded) {
+    const availableStock = product.remainingQuantity ?? product.quantity;
+    if (availableStock < totalQuantityNeeded) {
       throw new BadRequestException(
-        `Insufficient stock to fulfill this subscription. Required: ${totalQuantityNeeded}, Available: ${product.quantity}`
+        `Insufficient stock to fulfill this subscription. Required: ${totalQuantityNeeded}, Available: ${availableStock}`
       );
     }
 

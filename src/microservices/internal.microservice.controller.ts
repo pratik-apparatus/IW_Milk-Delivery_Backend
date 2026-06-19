@@ -49,7 +49,7 @@ export class InternalMicroserviceController {
 
   @MessagePattern(BackendPatterns.AUTH_VALIDATE_EMAIL)
   validateEmail(@Payload() payload: RpcEnvelope<{ email: string; role?: string }>) {
-    this.validate(payload);
+    this.validate(payload, { allowMissingTenant: true });
     return this.internalAuthService.validateEmail(
       payload.data.email,
       payload.data.role as Role | undefined,
@@ -58,7 +58,7 @@ export class InternalMicroserviceController {
 
   @MessagePattern(BackendPatterns.AUTH_UPDATE_PASSWORD)
   updatePassword(@Payload() payload: RpcEnvelope<{ email: string; newPassword: string }>) {
-    this.validate(payload);
+    this.validate(payload, { allowMissingTenant: true });
     return this.internalAuthService.updatePassword(
       payload.data.email,
       payload.data.newPassword,

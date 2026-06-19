@@ -1,32 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
+/** @deprecated Tenant table — lives in per-tenant DBs only. Kept as no-op for migration history. */
 export class CreateAppConfigsTable1713259000000 implements MigrationInterface {
   name = 'CreateAppConfigsTable1713259000000';
 
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
-      CREATE TABLE "app_configs" (
-        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "tenantId" uuid NOT NULL,
-        "logoUrl" character varying(500),
-        "theme" character varying(100),
-        "primaryColor" character varying(50),
-        "secondaryColor" character varying(50),
-        "styleVariables" jsonb NOT NULL DEFAULT '{}'::jsonb,
-        "fontFamily" character varying(255),
-        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
-        CONSTRAINT "PK_app_configs_id" PRIMARY KEY ("id"),
-        CONSTRAINT "UQ_app_configs_tenantId" UNIQUE ("tenantId")
-      )
-    `);
-    await queryRunner.query(
-      `CREATE INDEX "IDX_app_configs_tenantId" ON "app_configs" ("tenantId")`,
-    );
+  public async up(_queryRunner: QueryRunner): Promise<void> {
+    // app_configs belongs in tenant databases, not the platform DB.
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX "public"."IDX_app_configs_tenantId"`);
-    await queryRunner.query(`DROP TABLE "app_configs"`);
-  }
+  public async down(_queryRunner: QueryRunner): Promise<void> {}
 }

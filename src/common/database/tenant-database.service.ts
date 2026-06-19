@@ -4,11 +4,14 @@ import {
   OnModuleDestroy,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityTarget, ObjectLiteral, Repository } from 'typeorm';
 import { Tenant } from '../../entities/tenant.entity';
-import { TENANT_BUSINESS_ENTITIES } from './tenant-database.config';
+import {
+  createTenantDataSource,
+  runTenantMigrationsForDataSource,
+  tenantHasBusinessTables,
+} from './tenant-data-source.util';
 
 @Injectable()
 export class TenantDatabaseService implements OnModuleDestroy {
@@ -16,7 +19,6 @@ export class TenantDatabaseService implements OnModuleDestroy {
   private readonly connections = new Map<string, DataSource>();
 
   constructor(
-    private readonly configService: ConfigService,
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
   ) {}
@@ -26,12 +28,28 @@ export class TenantDatabaseService implements OnModuleDestroy {
     return Boolean(tenant?.dbName);
   }
 
-  /** Create tables inside the tenant database (runs once after CREATE DATABASE). */
+  /** Apply tenant migrations (and bootstrap schema on a brand-new empty database). */
   async initializeTenantSchema(tenant: Tenant): Promise<void> {
-    const dataSource = await this.createConnection(tenant, true);
-    await dataSource.destroy();
-    this.connections.delete(tenant.id);
-    this.logger.log(`Schema initialized for tenant database: ${tenant.dbName}`);
+    const dataSource = createTenantDataSource(tenant, { includeMigrations: true });
+    await dataSource.initialize();
+
+    try {
+      const hasTables = await tenantHasBusinessTables(dataSource);
+      if (!hasTables) {
+        this.logger.log(`Bootstrapping empty tenant database: ${tenant.dbName}`);
+        await dataSource.synchronize();
+      }
+
+      await runTenantMigrationsForDataSource(
+        dataSource,
+        `${tenant.businessName} (${tenant.dbName})`,
+      );
+    } finally {
+      await dataSource.destroy();
+      this.connections.delete(tenant.id);
+    }
+
+    this.logger.log(`Tenant schema migrated: ${tenant.dbName}`);
   }
 
   /** Get (or create) a TypeORM connection for this tenant's business data. */
@@ -51,7 +69,7 @@ export class TenantDatabaseService implements OnModuleDestroy {
       );
     }
 
-    return this.createConnection(tenant, false);
+    return this.createConnection(tenant);
   }
 
   /** Get a repository from a specific tenant database (for super-admin / internal calls). */
@@ -63,29 +81,11 @@ export class TenantDatabaseService implements OnModuleDestroy {
     return dataSource.getRepository(entity);
   }
 
-  private async createConnection(
-    tenant: Tenant,
-    initializeSchema: boolean,
-  ): Promise<DataSource> {
-    const dataSource = new DataSource({
-      type: 'postgres',
-      host: tenant.dbHost || this.configService.get('DB_HOST') || 'localhost',
-      port: tenant.dbPort || Number(this.configService.get('DB_PORT') || 5432),
-      username: tenant.dbUser || this.configService.get('DB_USER') || 'postgres',
-      password:
-        tenant.dbPassword || this.configService.get('DB_PASSWORD') || 'postgres',
-      database: tenant.dbName!,
-      entities: TENANT_BUSINESS_ENTITIES,
-      synchronize: initializeSchema,
-      logging: this.configService.get('NODE_ENV') === 'development',
-    });
-
+  /** Runtime tenant connections never auto-sync schema — use tenant migrations instead. */
+  private async createConnection(tenant: Tenant): Promise<DataSource> {
+    const dataSource = createTenantDataSource(tenant);
     await dataSource.initialize();
-
-    if (!initializeSchema) {
-      this.connections.set(tenant.id, dataSource);
-    }
-
+    this.connections.set(tenant.id, dataSource);
     return dataSource;
   }
 

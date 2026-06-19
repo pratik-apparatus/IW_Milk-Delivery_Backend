@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Tenant } from '../../entities/tenant.entity';
 import { TenantPlan } from '../../entities/tenant-plan.entity';
 import { TenantSubscription } from '../../entities/tenant-subscription.entity';
+import { AdminBillingController } from '../../admin/billing/admin-billing.controller';
 import { TenantPlanController } from './tenant-plan.controller';
 import { TenantPlanService } from './tenant-plan.service';
 import { TenantSubscriptionController } from './tenant-subscription.controller';
@@ -16,6 +17,7 @@ import { BillingWebhookController } from './billing-webhook.controller';
     TenantPlanController,
     TenantSubscriptionController,
     BillingWebhookController,
+    AdminBillingController,
   ],
   providers: [
     TenantPlanService,

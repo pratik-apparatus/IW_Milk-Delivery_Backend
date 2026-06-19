@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        NODE_ENV = 'production'
         CONTAINER_PORT = '4010'
         MS_PORT = '4012'
         IMAGE_NAME = 'milk-delivery-backend'
@@ -14,6 +13,22 @@ pipeline {
     }
 
     stages {
+        stage('Set Environment Profile') {
+            steps {
+                script {
+                    def prodBranches = ['main', 'master']
+                    if (prodBranches.contains(env.BRANCH_NAME)) {
+                        env.NODE_ENV = 'production'
+                        env.ENV_CREDENTIAL_ID = 'milk_delivery_backend_env'
+                    } else {
+                        env.NODE_ENV = 'development'
+                        env.ENV_CREDENTIAL_ID = 'milk_delivery_backend_env_dev'
+                    }
+                    echo "Branch: ${env.BRANCH_NAME} → NODE_ENV=${env.NODE_ENV}, credential=${env.ENV_CREDENTIAL_ID}"
+                }
+            }
+        }
+
         stage('Set Port and Container Name') {
             steps {
                 script {
@@ -25,7 +40,7 @@ pipeline {
 
         stage('Load Environment Variables') {
             steps {
-                withCredentials([file(credentialsId: 'milk_delivery_backend_env', variable: 'ENV_FILE')]) {
+                withCredentials([file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')]) {
                     sh '''
                         echo "Sanitizing env file for build..."
                         tr -d '\\r' < "$ENV_FILE" | sed 's/"//g' | sed "s/'//g" > .env
@@ -72,7 +87,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                withCredentials([file(credentialsId: 'milk_delivery_backend_env', variable: 'ENV_FILE')]) {
+                withCredentials([file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')]) {
                     sh '''
                         echo "Writing .env for build..."
                         tr -d '\\r' < "$ENV_FILE" | sed 's/"//g' | sed "s/'//g" > .env
@@ -85,7 +100,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                withCredentials([file(credentialsId: 'milk_delivery_backend_env', variable: 'ENV_FILE')]) {
+                withCredentials([file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')]) {
                     sh '''
                         echo "Writing .env for Docker build context..."
                         tr -d '\\r' < "$ENV_FILE" | sed 's/"//g' | sed "s/'//g" > .env
@@ -126,7 +141,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                withCredentials([file(credentialsId: 'milk_delivery_backend_env', variable: 'ENV_FILE')]) {
+                withCredentials([file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')]) {
                     sh '''
                         echo "Stopping old container..."
                         docker rm -f "$CONTAINER_NAME" || true

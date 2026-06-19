@@ -131,7 +131,7 @@ export class OrderService {
                 throw new BadRequestException(`Product ${product.name} is not available`);
             }
 
-            if (product.quantity < item.quantity) {
+            if ((product.remainingQuantity ?? product.quantity) < item.quantity) {
                 throw new BadRequestException(`Product ${product.name} is not available in this quantity`);
             }
         }
@@ -199,8 +199,9 @@ export class OrderService {
                 throw new BadRequestException(`Product ${item.productId} is not available`);
             }
 
-            if (product.quantity < item.quantity) {
-                throw new BadRequestException(`Insufficient stock for product ${product.name}. Available: ${product.quantity}`);
+            const availableStock = product.remainingQuantity ?? product.quantity;
+            if (availableStock < item.quantity) {
+                throw new BadRequestException(`Insufficient stock for product ${product.name}. Available: ${availableStock}`);
             }
 
             const itemTotal = Number(product.price) * item.quantity;
@@ -288,7 +289,7 @@ export class OrderService {
                 });
                 await queryRunner.manager.save(orderItem);
 
-                await queryRunner.manager.decrement(Product, tenantWhere(tenantId, { id: item.productId }, dedicated), 'quantity', item.quantity);
+                await queryRunner.manager.decrement(Product, tenantWhere(tenantId, { id: item.productId }, dedicated), 'remainingQuantity', item.quantity);
             }
 
             const partner = await queryRunner.manager.findOne(DeliveryPartner, {
@@ -416,8 +417,9 @@ export class OrderService {
             throw new BadRequestException(`Product ${productId} is not available`);
         }
 
-        if (product.quantity < quantity) {
-            throw new BadRequestException(`Insufficient stock for product ${product.name} (ID: ${productId}) for subscription order. Available: ${product.quantity}, Requested: ${quantity}.`);
+        const availableStock = product.remainingQuantity ?? product.quantity;
+        if (availableStock < quantity) {
+            throw new BadRequestException(`Insufficient stock for product ${product.name} (ID: ${productId}) for subscription order. Available: ${availableStock}, Requested: ${quantity}.`);
         }
 
         const totalAmount = productPrice * quantity;
@@ -462,7 +464,7 @@ export class OrderService {
             await queryRunner.manager.decrement(
                 Product,
                 tenantId ? tenantWhere(tenantId, { id: product.id }, dedicated) : { id: product.id },
-                'quantity',
+                'remainingQuantity',
                 quantity,
             );
 

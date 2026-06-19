@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User, Role } from '../../entities/user.entity';
 import { Tenant } from '../../entities/tenant.entity';
 import { CreateUserDto } from '../../dto/create-user.dto';
+import { TenantSubscriptionService } from '../../super-admin/billing/tenant-subscription.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class InternalAuthService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
+    private readonly tenantSubscriptionService: TenantSubscriptionService,
   ) { }
 
   async getLoginData(identifier: string, role: Role) {
@@ -107,6 +109,7 @@ export class InternalAuthService {
     }
 
     let tenant: Record<string, unknown> | null = null;
+    let billing: Record<string, unknown> | null = null;
     if (user.tenantId) {
       const tenantRecord = await this.tenantRepository.findOne({
         where: { id: user.tenantId },
@@ -116,6 +119,12 @@ export class InternalAuthService {
         const { dbPassword, dbUser, dbHost, dbPort, dbName, ...safeTenant } =
           tenantRecord;
         tenant = safeTenant;
+      }
+
+      if (user.role === Role.ADMIN) {
+        billing = await this.tenantSubscriptionService.getAdminBillingStatus(
+          user.tenantId,
+        );
       }
     }
 
@@ -127,37 +136,46 @@ export class InternalAuthService {
       role: user.role,
       tenantId: user.tenantId || null,
       tenant,
+      billing,
     };
   }
 
   async validateEmail(email: string, role?: Role) {
-    const whereCondition: any = { email, isActive: true };
-    
-    // If role is provided, also check that the user has that role
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const qb = this.userRepository
+      .createQueryBuilder('user')
+      .where('user.isActive = true')
+      .andWhere(
+        '(LOWER(user.email) = :email OR LOWER(user.username) = :email)',
+        { email: normalizedEmail },
+      );
+
     if (role) {
-      whereCondition.role = role;
+      qb.andWhere('user.role = :role', { role });
     }
 
-    const user = await this.userRepository.findOne({
-      where: whereCondition,
-    });
+    const user = await qb.getOne();
 
     if (!user) {
       throw new NotFoundException('Email not found');
     }
 
-    // If role was provided but user has different role, throw error
     if (role && user.role !== role) {
       throw new NotFoundException('Email not found for the specified role');
     }
 
-    return { exists: true };
+    return { exists: true, email: user.email };
   }
 
   async updatePassword(email: string, newPassword: string) {
-    const user = await this.userRepository.findOne({
-      where: { email, isActive: true },
-    });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.isActive = true')
+      .andWhere('LOWER(user.email) = :email', { email: normalizedEmail })
+      .getOne();
 
     if (!user) {
       throw new NotFoundException('User not found');

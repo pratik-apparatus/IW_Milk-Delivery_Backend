@@ -35,6 +35,10 @@ export class Product {
   @Column('int')
   quantity: number;
 
+  /** Current sellable stock; initialized from quantity on create, reduced by orders. */
+  @Column('int')
+  remainingQuantity: number;
+
   @Column({ type: 'varchar', length: 255 })
   description: string;
 

@@ -39,19 +39,19 @@ import { BillingModule } from './super-admin/billing/billing.module';
 import { MicroservicesModule } from './microservices/microservices.module';
 import { TenantContextMiddleware } from './common/middleware/tenant-context.middleware';
 import { EnabledAppsMiddleware } from './common/middleware/enabled-apps.middleware';
+import { getConfigModuleOptions } from './config/load-env';
+import { getTypeOrmLogging, isDbSyncEnabled } from './common/database/typeorm-options.util';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot(getConfigModuleOptions()),
     CommonModule,
     ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        // Local bootstrap: set DB_SYNC=true to auto-create schema in Postgres.
-        // Keep false in shared/staging/prod.
+        // Platform schema: npm run migration:platform:run:dev
+        // DB_SYNC=true is optional local escape hatch only (not recommended).
         type: 'postgres',
         host: configService.get('DB_HOST') || 'localhost',
         port: Number(configService.get('DB_PORT')) || 5432,
@@ -59,8 +59,8 @@ import { EnabledAppsMiddleware } from './common/middleware/enabled-apps.middlewa
         password: configService.get('DB_PASSWORD') || 'postgres',
         database: configService.get('DB_NAME') || 'milk_delivery',
         entities: PLATFORM_ENTITIES,
-        synchronize: true,
-        logging: configService.get('NODE_ENV') === 'development',
+        synchronize: isDbSyncEnabled(configService, 'DB_SYNC'),
+        logging: getTypeOrmLogging(configService),
       }),
       inject: [ConfigService],
     }),

@@ -34,3 +34,23 @@ export const TENANT_BUSINESS_ENTITIES = [
   AppConfig,
   AdminAuditLog,
 ];
+
+/** Postgres table names for tenant business entities (for platform DB cleanup migrations). */
+export const TENANT_BUSINESS_TABLES = [
+  'order_item',
+  'subscription_delivery_logs',
+  'delivery_partner_locations',
+  'wallet_transaction',
+  'admin_audit_logs',
+  'cart',
+  'payment',
+  'order',
+  'subscription',
+  'wallet',
+  'product',
+  'category',
+  'customer',
+  'delivery_partners',
+  'banner',
+  'app_configs',
+] as const;

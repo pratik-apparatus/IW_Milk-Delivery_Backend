@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import 'dotenv/config';
+import '../config/load-env';
 import { AppDataSource } from '../dataSource/data-source';
 
 async function runMigrations() {

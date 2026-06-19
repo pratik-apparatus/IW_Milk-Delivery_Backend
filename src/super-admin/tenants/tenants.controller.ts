@@ -112,6 +112,13 @@ export class TenantsController {
     return this.tenantsService.decommissionTenant(id);
   }
 
+  @Post(':id/restore')
+  @ApiOperation({ summary: 'Restore a decommissioned tenant and reactivate admins' })
+  @ApiResponse({ status: 200, description: 'Tenant restored successfully' })
+  restore(@Param('id') id: string) {
+    return this.tenantsService.restoreTenant(id);
+  }
+
   @Get(':id/provisioning-jobs/:jobId')
   @ApiOperation({ summary: 'Get provisioning job status by job ID' })
   @ApiResponse({ status: 200, description: 'Provisioning job status fetched' })

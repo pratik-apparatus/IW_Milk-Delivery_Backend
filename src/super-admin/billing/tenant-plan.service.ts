@@ -26,6 +26,7 @@ export class TenantPlanService {
       name: dto.name,
       description: dto.description || null,
       amount: dto.amount,
+      durationDays: dto.durationDays ?? 30,
       isActive: true,
     });
     return this.planRepo.save(plan);

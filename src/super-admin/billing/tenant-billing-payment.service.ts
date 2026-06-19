@@ -3,7 +3,6 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -16,6 +15,11 @@ import {
 } from '../../entities/tenant-subscription.entity';
 import { TenantPlan } from '../../entities/tenant-plan.entity';
 import { Tenant } from '../../entities/tenant.entity';
+import { findSuperAdminTenant } from '../common/find-super-admin-tenant';
+import {
+  addSubscriptionDays,
+  syncSubscriptionExpiry,
+} from './tenant-subscription.util';
 
 const Razorpay = require('razorpay');
 
@@ -56,13 +60,25 @@ export class TenantBillingPaymentService {
     });
   }
 
-  /** Create a Razorpay order for the tenant's assigned plan. */
+  /** Create a Razorpay order for the tenant's assigned plan (super-admin). */
   async createOrder(tenantId: string) {
-    const subscription = await this.getSubscriptionOrThrow(tenantId);
+    return this.createOrderForTenant(tenantId, true);
+  }
+
+  /** Create a Razorpay order when tenant admin initiates payment. */
+  async createOrderForTenant(tenantId: string, requireSuperAdminTenant = false) {
+    const subscription = await this.getSubscriptionOrThrow(
+      tenantId,
+      requireSuperAdminTenant,
+    );
     await this.syncExpiredStatus(subscription);
 
     if (subscription.status === TenantSubscriptionStatus.CANCELLED) {
       throw new BadRequestException('Subscription is cancelled. Assign a plan first.');
+    }
+
+    if (subscription.status === TenantSubscriptionStatus.ACTIVE) {
+      throw new BadRequestException('Subscription is already active.');
     }
 
     const amount = Number(subscription.amount);
@@ -92,14 +108,34 @@ export class TenantBillingPaymentService {
     };
   }
 
-  /** Verify Razorpay payment and activate the tenant subscription. */
+  /** Verify Razorpay payment and activate the tenant subscription (super-admin). */
   async verifyPayment(
     tenantId: string,
     razorpayOrderId: string,
     razorpayPaymentId: string,
     razorpaySignature: string,
   ) {
-    const subscription = await this.getSubscriptionOrThrow(tenantId);
+    return this.verifyPaymentForTenant(
+      tenantId,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      true,
+    );
+  }
+
+  /** Verify Razorpay payment when tenant admin completes checkout. */
+  async verifyPaymentForTenant(
+    tenantId: string,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string,
+    requireSuperAdminTenant = false,
+  ) {
+    const subscription = await this.getSubscriptionOrThrow(
+      tenantId,
+      requireSuperAdminTenant,
+    );
 
     if (subscription.razorpayOrderId !== razorpayOrderId) {
       throw new BadRequestException('Order does not match current subscription');
@@ -176,9 +212,13 @@ export class TenantBillingPaymentService {
     paymentId: string | null,
     orderId: string | null,
   ) {
+    const plan = await this.planRepo.findOne({
+      where: { id: subscription.planId },
+    });
+    const durationDays = plan?.durationDays ?? 30;
+
     const now = new Date();
-    const expiresAt = new Date(now);
-    expiresAt.setDate(expiresAt.getDate() + 30);
+    const expiresAt = addSubscriptionDays(now, durationDays);
 
     subscription.status = TenantSubscriptionStatus.ACTIVE;
     subscription.paidAt = now;
@@ -205,10 +245,12 @@ export class TenantBillingPaymentService {
     };
   }
 
-  private async getSubscriptionOrThrow(tenantId: string) {
-    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
-    if (!tenant || tenant.deletedAt) {
-      throw new NotFoundException('Tenant not found');
+  private async getSubscriptionOrThrow(
+    tenantId: string,
+    requireSuperAdminTenant = false,
+  ) {
+    if (requireSuperAdminTenant) {
+      await findSuperAdminTenant(this.tenantRepo, tenantId);
     }
 
     const subscription = await this.subscriptionRepo.findOne({
@@ -223,12 +265,13 @@ export class TenantBillingPaymentService {
   }
 
   async syncExpiredStatus(subscription: TenantSubscription) {
-    if (
-      subscription.status === TenantSubscriptionStatus.ACTIVE &&
-      subscription.expiresAt &&
-      subscription.expiresAt < new Date()
-    ) {
-      subscription.status = TenantSubscriptionStatus.EXPIRED;
+    await syncSubscriptionExpiry(subscription, this.subscriptionRepo);
+
+    // Legacy rows may still be EXPIRED — treat as renewal pending.
+    if (subscription.status === TenantSubscriptionStatus.EXPIRED) {
+      subscription.status = TenantSubscriptionStatus.PENDING_PAYMENT;
+      subscription.razorpayOrderId = null;
+      subscription.razorpayPaymentId = null;
       await this.subscriptionRepo.save(subscription);
     }
   }

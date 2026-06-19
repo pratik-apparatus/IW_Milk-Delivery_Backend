@@ -1,24 +1,23 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsObject, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsArray, IsIn, IsObject, IsOptional } from 'class-validator';
+import { OPTIONAL_TENANT_APPS } from '../../../common/constants/tenant-apps.constants';
 
 export class UpdateTenantAppsDto {
   @ApiProperty({
-    example: ['CUSTOMER_APP', 'DELIVERY_APP'],
-    type: [String],
+    example: ['DELIVERY_APP', 'SUBSCRIPTIONS_MODULE'],
+    description:
+      'Optional modules to enable. CUSTOMER_APP and ADMIN_APP remain enabled.',
+    enum: OPTIONAL_TENANT_APPS,
+    isArray: true,
   })
   @IsArray()
-  @IsString({ each: true })
+  @IsIn([...OPTIONAL_TENANT_APPS], { each: true })
   enabledApps: string[];
 
-  @ApiProperty({
-    required: false,
-    example: {
-      CUSTOMER_APP: { theme: 'light' },
-      DELIVERY_APP: { liveTracking: true },
-    },
+  @ApiPropertyOptional({
+    example: { deliverySlots: ['MORNING', 'EVENING'] },
   })
   @IsOptional()
   @IsObject()
   appSettings?: Record<string, unknown>;
 }
-

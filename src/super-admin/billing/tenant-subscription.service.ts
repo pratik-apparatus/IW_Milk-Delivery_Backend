@@ -7,7 +7,9 @@ import {
   TenantSubscription,
   TenantSubscriptionStatus,
 } from '../../entities/tenant-subscription.entity';
+import { findSuperAdminTenant } from '../common/find-super-admin-tenant';
 import { TenantBillingPaymentService } from './tenant-billing-payment.service';
+import { addSubscriptionDays } from './tenant-subscription.util';
 
 @Injectable()
 export class TenantSubscriptionService {
@@ -22,10 +24,7 @@ export class TenantSubscriptionService {
   ) {}
 
   async assignPlan(tenantId: string, planId: string) {
-    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
-    if (!tenant || tenant.deletedAt) {
-      throw new NotFoundException('Tenant not found');
-    }
+    await findSuperAdminTenant(this.tenantRepo, tenantId);
 
     const plan = await this.planRepo.findOne({
       where: { id: planId, isActive: true },
@@ -40,6 +39,8 @@ export class TenantSubscriptionService {
     });
 
     const needsPayment = amount > 0;
+    const durationDays = plan.durationDays ?? 30;
+    const expiresAt = addSubscriptionDays(new Date(), durationDays);
 
     if (subscription) {
       subscription.planId = plan.id;
@@ -52,9 +53,7 @@ export class TenantSubscriptionService {
       subscription.razorpayOrderId = null;
       subscription.razorpayPaymentId = null;
       subscription.paidAt = needsPayment ? null : new Date();
-      subscription.expiresAt = needsPayment
-        ? null
-        : this.addDays(new Date(), 30);
+      subscription.expiresAt = expiresAt;
     } else {
       subscription = this.subscriptionRepo.create({
         tenantId,
@@ -66,7 +65,7 @@ export class TenantSubscriptionService {
         startedAt: needsPayment ? null : new Date(),
         cancelledAt: null,
         paidAt: needsPayment ? null : new Date(),
-        expiresAt: needsPayment ? null : this.addDays(new Date(), 30),
+        expiresAt,
       });
     }
 
@@ -75,11 +74,19 @@ export class TenantSubscriptionService {
   }
 
   async getStatus(tenantId: string) {
-    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
-    if (!tenant || tenant.deletedAt) {
-      throw new NotFoundException('Tenant not found');
-    }
+    await findSuperAdminTenant(this.tenantRepo, tenantId);
+    return this.getBillingStatus(tenantId, true);
+  }
 
+  /** Billing overview for tenant admin (no super-admin tenant lookup). */
+  async getAdminBillingStatus(tenantId: string) {
+    return this.getBillingStatus(tenantId, false);
+  }
+
+  private async getBillingStatus(
+    tenantId: string,
+    includeAvailablePlans: boolean,
+  ) {
     const subscription = await this.subscriptionRepo.findOne({
       where: { tenantId },
     });
@@ -88,12 +95,17 @@ export class TenantSubscriptionService {
       await this.billingPayment.syncExpiredStatus(subscription);
     }
 
+    const status = await this.buildStatusResponse(tenantId, subscription);
+
+    if (!includeAvailablePlans) {
+      return status;
+    }
+
     const availablePlans = await this.planRepo.find({
       where: { isActive: true },
       order: { amount: 'ASC' },
     });
 
-    const status = await this.buildStatusResponse(tenantId, subscription);
     return {
       ...status,
       availablePlans: availablePlans.map((plan) => ({
@@ -101,12 +113,15 @@ export class TenantSubscriptionService {
         name: plan.name,
         description: plan.description,
         amount: Number(plan.amount),
+        durationDays: plan.durationDays,
         isActive: plan.isActive,
       })),
     };
   }
 
   async cancel(tenantId: string) {
+    await findSuperAdminTenant(this.tenantRepo, tenantId);
+
     const subscription = await this.subscriptionRepo.findOne({
       where: { tenantId },
     });
@@ -121,6 +136,8 @@ export class TenantSubscriptionService {
   }
 
   async removeEnded(tenantId: string) {
+    await findSuperAdminTenant(this.tenantRepo, tenantId);
+
     const subscription = await this.subscriptionRepo.findOne({
       where: { tenantId },
     });
@@ -145,12 +162,6 @@ export class TenantSubscriptionService {
       message: 'Subscription removed successfully',
       tenantId,
     };
-  }
-
-  private addDays(date: Date, days: number) {
-    const next = new Date(date);
-    next.setDate(next.getDate() + days);
-    return next;
   }
 
   private async buildStatusResponse(
@@ -190,14 +201,14 @@ export class TenantSubscriptionService {
       expiresAt: subscription.expiresAt,
       razorpayOrderId: subscription.razorpayOrderId,
       paymentRequired:
-        subscription.status === TenantSubscriptionStatus.PENDING_PAYMENT ||
-        subscription.status === TenantSubscriptionStatus.EXPIRED,
+        subscription.status === TenantSubscriptionStatus.PENDING_PAYMENT,
       plan: plan
         ? {
             id: plan.id,
             name: plan.name,
             description: plan.description,
             amount: Number(plan.amount),
+            durationDays: plan.durationDays,
             isActive: plan.isActive,
           }
         : null,

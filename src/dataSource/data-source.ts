@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import 'dotenv/config';
+import '../config/load-env';
 import { DataSource } from 'typeorm';
 import { PLATFORM_ENTITIES } from '../common/database/platform-database.config';
 
@@ -14,6 +14,5 @@ export const AppDataSource = new DataSource({
   migrations: ['src/migrations/*.ts'],
   migrationsTableName: 'migrations',
   synchronize: false,
-  logging: ['query', 'error'],
-  logger: 'advanced-console',
+  logging: process.env.DB_LOGGING === 'true' ? ['query', 'error'] : ['error'],
 });

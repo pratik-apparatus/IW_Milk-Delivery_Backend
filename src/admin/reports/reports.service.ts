@@ -224,6 +224,7 @@ export class ReportsService {
             .addSelect('product.name', 'productName')
             .addSelect('SUM(orderItem.quantity)', 'unitsSold')
             .addSelect('MIN(product.quantity)', 'totalQuantity')
+            .addSelect('MIN(product.remainingQuantity)', 'remainingQuantity')
             .groupBy('product.id')
             .addGroupBy('product.name')
             .orderBy('unitsSold', 'DESC');
@@ -267,7 +268,8 @@ export class ReportsService {
             data: data.map(item => ({
                 ...item,
                 unitsSold: parseInt(item.unitsSold || 0),
-                totalQuantity: parseInt(item.totalQuantity || 0)
+                totalQuantity: parseInt(item.totalQuantity || 0),
+                remainingQuantity: parseInt(item.remainingQuantity || 0),
             })),
             meta: {
                 total: parseInt(totalResult[0]?.count || 0),
@@ -293,6 +295,7 @@ export class ReportsService {
             .addSelect('product.name', 'productName')
             .addSelect('SUM(orderItem.quantity)', 'unitsSold')
             .addSelect('MIN(product.quantity)', 'totalQuantity')
+            .addSelect('MIN(product.remainingQuantity)', 'remainingQuantity')
             .groupBy('product.id')
             .addGroupBy('product.name')
             .having('SUM(orderItem.quantity) > 0')
@@ -337,7 +340,8 @@ export class ReportsService {
             data: data.map(item => ({
                 ...item,
                 unitsSold: parseInt(item.unitsSold || 0),
-                totalQuantity: parseInt(item.totalQuantity || 0)
+                totalQuantity: parseInt(item.totalQuantity || 0),
+                remainingQuantity: parseInt(item.remainingQuantity || 0),
             })),
             meta: {
                 total: parseInt(totalResult[0]?.count || 0),

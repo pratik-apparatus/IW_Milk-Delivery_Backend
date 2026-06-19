@@ -21,6 +21,10 @@ export class TenantPlan {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;
 
+  /** How many days the subscription stays active after payment. */
+  @Column({ type: 'int', default: 30 })
+  durationDays: number;
+
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
