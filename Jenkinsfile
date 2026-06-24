@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        CONTAINER_PORT = '4010'
+        CONTAINER_PORT = '6025'
         MS_PORT = '4012'
         IMAGE_NAME = 'milk-delivery-backend'
         NETWORK_NAME = 'milk-delivery-services'
@@ -32,7 +32,7 @@ pipeline {
         stage('Set Port and Container Name') {
             steps {
                 script {
-                    env.HOST_PORT = '4010'
+                    env.HOST_PORT = '6025'
                     env.CONTAINER_NAME = "milk-delivery-backend-${env.BRANCH_NAME}"
                 }
             }

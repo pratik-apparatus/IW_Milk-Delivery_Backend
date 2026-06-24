@@ -109,7 +109,7 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, document);
 
 
-  const port = process.env.PORT || 4010;
+  const port = process.env.PORT || 6025;
   const msHost = process.env.MS_HOST || '0.0.0.0';
   const msPort = Number(process.env.MS_PORT || 4012);
 

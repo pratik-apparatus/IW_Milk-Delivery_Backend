@@ -30,6 +30,7 @@ export class InternalCustomerService {
 
     const repo = await this.customerRepo(tenantId);
     let customer = await repo.findOne({ where: { phone, isBanned: false } });
+    const isNewCustomer = !customer;
 
     if (!customer) {
       const uniqueId = randomUUID();
@@ -52,6 +53,7 @@ export class InternalCustomerService {
       customerId: customer.id,
       phone: customer.phone,
       tenantId,
+      isNewCustomer,
     };
   }
 

@@ -99,7 +99,10 @@ export class InternalMicroserviceController {
   @MessagePattern(BackendPatterns.CUSTOMER_GET_AUTH_DATA)
   getCustomerAuthData(@Payload() payload: RpcEnvelope<{ phone: string }>) {
     this.validate(payload);
-    return this.internalCustomerService.getAuthData(payload.data.phone);
+    return this.internalCustomerService.getAuthData(
+      payload.data.phone,
+      payload.tenantId || null,
+    );
   }
 
   @MessagePattern(BackendPatterns.ADMIN_CREATE)
