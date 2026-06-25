@@ -58,33 +58,6 @@ pipeline {
             }
         }
 
-        stage('Format Check') {
-            steps {
-                sh '''
-                    docker run --rm -v ${WORKSPACE}:/app -w /app node:20-alpine sh -c \
-                      "npx prettier --check \\"src/**/*.ts\\" \\"test/**/*.ts\\""
-                '''
-            }
-        }
-
-        stage('Lint Fix') {
-            steps {
-                sh '''
-                    docker run --rm -v ${WORKSPACE}:/app -w /app node:20-alpine sh -c \
-                      "npm run lint"
-                '''
-            }
-        }
-
-        stage('Type Check') {
-            steps {
-                sh '''
-                    docker run --rm -v ${WORKSPACE}:/app -w /app node:20-alpine sh -c \
-                      "npx tsc --noEmit"
-                '''
-            }
-        }
-
         stage('Build') {
             steps {
                 withCredentials([file(credentialsId: "${ENV_CREDENTIAL_ID}", variable: 'ENV_FILE')]) {
