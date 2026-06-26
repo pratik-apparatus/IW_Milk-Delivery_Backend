@@ -9,14 +9,12 @@ import {
   Param,
   Req,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
 import { SubscriptionService } from './subscription.service';
@@ -25,13 +23,12 @@ import {
   CreateSubscriptionDto,
   SubscriptionResDto,
 } from '../../dto/subscription.dto';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CustomerProtected } from '../../auth/customer-protected.decorator';
 import { CurrentUser } from '../../auth/current-user.decorator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @ApiTags('Customer | Subscriptions')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@CustomerProtected()
 @Controller('subscriptions')
 export class SubscriptionController {
   constructor(

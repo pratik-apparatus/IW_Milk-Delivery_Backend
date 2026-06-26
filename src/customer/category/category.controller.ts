@@ -2,8 +2,10 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { CategoryService } from '../../admin/categories/categories.servics';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { TenantScoped } from '../../auth/tenant-scoped.decorator';
 
 @ApiTags('Customer | Categories')
+@TenantScoped()
 @Controller('categories')
 export class CustomerCategoryController {
   constructor(private readonly categoryService: CategoryService) {}

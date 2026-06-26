@@ -2,8 +2,10 @@ import { Controller, Get, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { AppConfigService } from '../../admin/app-config/app-config.service';
+import { TenantScoped } from '../../auth/tenant-scoped.decorator';
 
 @ApiTags('Customer | App Config')
+@TenantScoped()
 @Controller('customer/app-config')
 export class CustomerAppConfigController {
   constructor(private readonly appConfigService: AppConfigService) {}

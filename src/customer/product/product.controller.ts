@@ -2,8 +2,10 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ProductService } from '../../admin/product/product.sevices';
 import { ProductQueryDto } from '../../common/dto/pagination-query.dto';
+import { TenantScoped } from '../../auth/tenant-scoped.decorator';
 
 @ApiTags('Customer | Products')
+@TenantScoped()
 @Controller('products')
 export class CustomerProductController {
   constructor(private readonly productService: ProductService) {}

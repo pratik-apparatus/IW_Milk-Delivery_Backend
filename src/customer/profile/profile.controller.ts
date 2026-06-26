@@ -5,14 +5,12 @@ import {
   Put,
   Body,
   Req,
-  UseGuards,
   Query,
   Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
-  ApiBearerAuth,
   ApiResponse,
 } from '@nestjs/swagger';
 import { CustomerProfileService } from './profile.service';
@@ -20,12 +18,11 @@ import {
   CreateCustomerProfileDto,
   UpdateCustomerProfileDto,
 } from '../../dto/customer-profile.dto';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CustomerProtected } from '../../auth/customer-protected.decorator';
 import { CurrentUser } from '../../auth/current-user.decorator';
 
 @ApiTags('Customer | Profile')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@CustomerProtected()
 @Controller('customer/profile')
 export class CustomerProfileController {
   constructor(private readonly profileService: CustomerProfileService) {}

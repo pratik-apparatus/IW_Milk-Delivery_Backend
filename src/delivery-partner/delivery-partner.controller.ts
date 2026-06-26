@@ -5,7 +5,6 @@ import {
   Put,
   Param,
   Body,
-  UseGuards,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
@@ -18,14 +17,12 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
   ApiConsumes,
   ApiBody,
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { DeliveryPartnerGuard } from './guards/delivery-partner.guard';
+import { DeliveryPartnerProtected } from '../auth/delivery-partner-protected.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { DeliveryPartnerService } from './delivery-partner.service';
 import { LocationService } from './location.service';
@@ -63,8 +60,7 @@ const storage = diskStorage({
 });
 
 @ApiTags('Delivery Partner')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, DeliveryPartnerGuard)
+@DeliveryPartnerProtected()
 @Controller('delivery-partner')
 export class DeliveryPartnerController {
   private readonly logger = new Logger('DeliveryPartnerController');

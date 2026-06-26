@@ -1,10 +1,9 @@
-import { Controller, Get, Param, Req, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Req, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
 import { TrackingService } from './tracking.service';
@@ -12,12 +11,11 @@ import {
   OrderTrackingResDto,
   DeliveryPartnerResDto,
 } from '../../dto/tracking.dto';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CustomerProtected } from '../../auth/customer-protected.decorator';
 import { CurrentUser } from '../../auth/current-user.decorator';
 
 @ApiTags('Customer | Order Tracking')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@CustomerProtected()
 @Controller('orders')
 export class TrackingController {
   constructor(private readonly trackingService: TrackingService) {}
