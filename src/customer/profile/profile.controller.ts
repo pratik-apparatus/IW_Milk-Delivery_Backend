@@ -8,11 +8,7 @@ import {
   Query,
   Delete,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CustomerProfileService } from './profile.service';
 import {
   CreateCustomerProfileDto,
