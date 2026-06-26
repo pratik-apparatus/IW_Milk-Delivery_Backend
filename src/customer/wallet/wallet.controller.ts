@@ -5,17 +5,10 @@ import {
   Body,
   Req,
   Query,
-  UseGuards,
   Param,
   Delete,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { WalletService } from './wallet.service';
 import {
   WalletBalanceResDto,
@@ -23,12 +16,11 @@ import {
   AddMoneyDto,
 } from '../../dto/wallet.dto';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CustomerProtected } from '../../auth/customer-protected.decorator';
 import { CurrentUser } from '../../auth/current-user.decorator';
 
 @ApiTags('Customer | Wallet')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@CustomerProtected()
 @Controller('wallet')
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}

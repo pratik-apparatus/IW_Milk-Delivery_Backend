@@ -1,5 +1,6 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTenantHeader } from '../common/decorators/api-tenant-header.decorator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
@@ -26,12 +27,7 @@ function adminAuthGuards(includeSubscriptionCheck: boolean) {
 export function AdminProtected() {
   return applyDecorators(
     ApiBearerAuth(),
-    ApiHeader({
-      name: 'x-tenant-id',
-      required: false,
-      description:
-        'Tenant UUID. Optional for tenant ADMIN if the JWT already contains tenantId.',
-    }),
+    ApiTenantHeader(false),
     UseGuards(...adminAuthGuards(true)),
     Roles('ADMIN'),
   );
@@ -41,12 +37,7 @@ export function AdminProtected() {
 export function AdminBillingProtected() {
   return applyDecorators(
     ApiBearerAuth(),
-    ApiHeader({
-      name: 'x-tenant-id',
-      required: false,
-      description:
-        'Tenant UUID. Optional for tenant ADMIN if the JWT already contains tenantId.',
-    }),
+    ApiTenantHeader(false),
     UseGuards(...adminAuthGuards(false)),
     Roles('ADMIN'),
   );

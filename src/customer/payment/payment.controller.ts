@@ -1,11 +1,5 @@
-import { Controller, Post, Body, Req, Query, UseGuards } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { Controller, Post, Body, Req, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { PaymentService } from './payment.service';
 import {
   CreateRazorpayOrderDto,
@@ -13,12 +7,11 @@ import {
   VerifyRazorpayPaymentDto,
   VerifyPaymentResDto,
 } from '../../dto/payment.dto';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CustomerProtected } from '../../auth/customer-protected.decorator';
 import { CurrentUser } from '../../auth/current-user.decorator';
 
 @ApiTags('Customer | Payments')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@CustomerProtected()
 @Controller('payments/razorpay')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
