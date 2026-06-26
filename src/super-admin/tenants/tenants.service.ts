@@ -78,10 +78,12 @@ export class TenantsService {
       supportEmail: payload.supportEmail || null,
       supportPhone: payload.supportPhone || null,
       dbHost: payload.dbHost || this.configService.get('DB_HOST') || null,
-      dbPort: payload.dbPort || Number(this.configService.get('DB_PORT') || 5432),
+      dbPort:
+        payload.dbPort || Number(this.configService.get('DB_PORT') || 5432),
       dbName: payload.dbName || this.buildDefaultDbName(payload.subdomain),
       dbUser: payload.dbUser || this.configService.get('DB_USER') || null,
-      dbPassword: payload.dbPassword || this.configService.get('DB_PASSWORD') || null,
+      dbPassword:
+        payload.dbPassword || this.configService.get('DB_PASSWORD') || null,
     });
     const created = await this.tenantRepo.save(tenant);
     this.emitTenantEvent(TenantLifecycleEventType.TENANT_CREATED, created.id, {
@@ -156,8 +158,14 @@ export class TenantsService {
     }
 
     if (integrationConfig !== undefined) {
-      const existing = (tenant.integrationConfig || {}) as Record<string, unknown>;
-      const existingRazorpay = (existing.razorpay || {}) as Record<string, unknown>;
+      const existing = (tenant.integrationConfig || {}) as Record<
+        string,
+        unknown
+      >;
+      const existingRazorpay = (existing.razorpay || {}) as Record<
+        string,
+        unknown
+      >;
       tenant.integrationConfig = normalizeIntegrationConfig({
         razorpay: {
           ...existingRazorpay,
@@ -182,9 +190,13 @@ export class TenantsService {
       payload.status === TenantStatus.SUSPENDED ? payload.reason || null : null;
 
     const updated = await this.tenantRepo.save(tenant);
-    this.emitTenantEvent(TenantLifecycleEventType.TENANT_STATUS_UPDATED, updated.id, {
-      status: updated.status,
-    });
+    this.emitTenantEvent(
+      TenantLifecycleEventType.TENANT_STATUS_UPDATED,
+      updated.id,
+      {
+        status: updated.status,
+      },
+    );
     return this.sanitizeTenant(updated);
   }
 
@@ -200,9 +212,13 @@ export class TenantsService {
     }
 
     const updated = await this.tenantRepo.save(tenant);
-    this.emitTenantEvent(TenantLifecycleEventType.TENANT_APPS_UPDATED, updated.id, {
-      enabledApps: updated.enabledApps,
-    });
+    this.emitTenantEvent(
+      TenantLifecycleEventType.TENANT_APPS_UPDATED,
+      updated.id,
+      {
+        enabledApps: updated.enabledApps,
+      },
+    );
     return this.sanitizeTenant(updated);
   }
 
@@ -225,7 +241,8 @@ export class TenantsService {
 
     tenant.status = TenantStatus.INACTIVE;
     tenant.deletedAt = new Date();
-    tenant.suspensionReason = tenant.suspensionReason || 'Tenant decommissioned';
+    tenant.suspensionReason =
+      tenant.suspensionReason || 'Tenant decommissioned';
     await this.tenantRepo.save(tenant);
 
     this.emitTenantEvent(TenantLifecycleEventType.TENANT_DECOMMISSIONED, id, {
@@ -321,9 +338,13 @@ export class TenantsService {
       job.steps = [...job.steps, 'MARK_ACTIVE'];
       job.status = ProvisioningJobStatus.DONE;
       job.lastError = null;
-      this.emitTenantEvent(TenantLifecycleEventType.TENANT_PROVISIONED, tenant.id, {
-        jobId: job.id,
-      });
+      this.emitTenantEvent(
+        TenantLifecycleEventType.TENANT_PROVISIONED,
+        tenant.id,
+        {
+          jobId: job.id,
+        },
+      );
       return await this.provisioningRepo.save(job);
     } catch (error: any) {
       job.status = ProvisioningJobStatus.FAILED;
@@ -481,4 +502,3 @@ export class TenantsService {
     });
   }
 }
-

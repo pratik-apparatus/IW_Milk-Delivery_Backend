@@ -20,17 +20,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      
+
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
-      } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+      } else if (
+        typeof exceptionResponse === 'object' &&
+        exceptionResponse !== null
+      ) {
         message = (exceptionResponse as any).message || exception.message;
       } else {
         message = exception.message;
       }
     } else if (exception instanceof Error) {
       // Handle multer file filter errors
-      if (exception.message.includes('image') || exception.message.includes('file')) {
+      if (
+        exception.message.includes('image') ||
+        exception.message.includes('file')
+      ) {
         status = HttpStatus.BAD_REQUEST;
         message = exception.message;
       } else {
@@ -46,5 +52,3 @@ export class HttpExceptionFilter implements ExceptionFilter {
     });
   }
 }
-
-

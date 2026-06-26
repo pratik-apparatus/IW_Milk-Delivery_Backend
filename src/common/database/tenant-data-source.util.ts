@@ -31,7 +31,11 @@ export function resolveTenantDbConnection(
     host: env.TENANT_DB_HOST || tenant.dbHost || env.DB_HOST || 'localhost',
     port: Number(env.TENANT_DB_PORT || tenant.dbPort || env.DB_PORT || 5432),
     username: env.TENANT_DB_USER || tenant.dbUser || env.DB_USER || 'postgres',
-    password: env.TENANT_DB_PASSWORD || tenant.dbPassword || env.DB_PASSWORD || 'postgres',
+    password:
+      env.TENANT_DB_PASSWORD ||
+      tenant.dbPassword ||
+      env.DB_PASSWORD ||
+      'postgres',
     database: tenant.dbName!,
   };
 }
@@ -42,7 +46,8 @@ export function createPseudoTenantForDirectMigration(dbName: string): Tenant {
     dbHost: process.env.TENANT_DB_HOST || process.env.DB_HOST || 'localhost',
     dbPort: Number(process.env.TENANT_DB_PORT || process.env.DB_PORT || 5432),
     dbUser: process.env.TENANT_DB_USER || process.env.DB_USER || 'postgres',
-    dbPassword: process.env.TENANT_DB_PASSWORD || process.env.DB_PASSWORD || 'postgres',
+    dbPassword:
+      process.env.TENANT_DB_PASSWORD || process.env.DB_PASSWORD || 'postgres',
   } as Tenant;
 }
 
@@ -95,7 +100,9 @@ function getTypeOrmLoggingFromEnv(): boolean | ('error' | 'warn')[] {
   return ['error', 'warn'];
 }
 
-export async function tenantHasBusinessTables(dataSource: DataSource): Promise<boolean> {
+export async function tenantHasBusinessTables(
+  dataSource: DataSource,
+): Promise<boolean> {
   const result = await dataSource.query(`
     SELECT COUNT(*)::int AS count
     FROM information_schema.tables
@@ -114,7 +121,9 @@ export async function runTenantMigrationsForDataSource(
   if (applied.length === 0) {
     console.log(`  No pending tenant migrations for ${label}.`);
   } else {
-    console.log(`  Applied ${applied.length} tenant migration(s) for ${label}:`);
+    console.log(
+      `  Applied ${applied.length} tenant migration(s) for ${label}:`,
+    );
     applied.forEach((migration) => console.log(`    - ${migration.name}`));
   }
   return applied.map((migration) => migration.name);

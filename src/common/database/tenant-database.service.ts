@@ -30,13 +30,17 @@ export class TenantDatabaseService implements OnModuleDestroy {
 
   /** Apply tenant migrations (and bootstrap schema on a brand-new empty database). */
   async initializeTenantSchema(tenant: Tenant): Promise<void> {
-    const dataSource = createTenantDataSource(tenant, { includeMigrations: true });
+    const dataSource = createTenantDataSource(tenant, {
+      includeMigrations: true,
+    });
     await dataSource.initialize();
 
     try {
       const hasTables = await tenantHasBusinessTables(dataSource);
       if (!hasTables) {
-        this.logger.log(`Bootstrapping empty tenant database: ${tenant.dbName}`);
+        this.logger.log(
+          `Bootstrapping empty tenant database: ${tenant.dbName}`,
+        );
         await dataSource.synchronize();
       }
 

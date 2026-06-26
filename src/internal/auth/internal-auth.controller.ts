@@ -56,4 +56,3 @@ export class InternalAuthController {
     return { success: true };
   }
 }
-

@@ -70,7 +70,10 @@ export class RefreshTokenService {
   }
 
   async revokeAllForUser(userId: string) {
-    await this.refreshTokenRepo.update({ userId, revoked: false }, { revoked: true });
+    await this.refreshTokenRepo.update(
+      { userId, revoked: false },
+      { revoked: true },
+    );
   }
 
   async purgeExpired() {

@@ -1,6 +1,8 @@
 import { loadedEnvFile } from './config/load-env';
 
-console.log(`Environment: ${process.env.NODE_ENV || 'production'} (${loadedEnvFile})`);
+console.log(
+  `Environment: ${process.env.NODE_ENV || 'production'} (${loadedEnvFile})`,
+);
 
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
@@ -13,7 +15,6 @@ import { ProductModule } from './admin/product/product.module';
 import { AdminDeliveryPartnerModule } from './admin/deliveryPartner/deliverypartner.module';
 import { subscriptionModule } from './admin/subscription/subscrition.module';
 import { CustomerModule } from './admin/customers/customer.module';
-
 
 // New Customer Modules
 import { CustomerProfileModule } from './customer/profile/profile.module';
@@ -38,7 +39,6 @@ import { HealthModule } from './health/health.module';
 import { TenantsModule } from './super-admin/tenants/tenants.module';
 import { BillingModule } from './super-admin/billing/billing.module';
 
-
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
@@ -46,7 +46,6 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
-
 
   // Enable CORS - Allow all origins
   app.enableCors({
@@ -101,13 +100,11 @@ async function bootstrap() {
       AdminAuditLogModule,
       HealthModule,
       TenantsModule,
-      BillingModule
-
+      BillingModule,
     ],
   });
 
   SwaggerModule.setup('api-docs', app, document);
-
 
   const port = process.env.PORT || 6025;
   const msHost = process.env.MS_HOST || '0.0.0.0';
@@ -126,5 +123,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-
-

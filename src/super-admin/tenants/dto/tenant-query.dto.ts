@@ -12,4 +12,3 @@ export class TenantQueryDto extends PaginationQueryDto {
   @IsEnum(TenantStatus)
   status?: TenantStatus;
 }
-

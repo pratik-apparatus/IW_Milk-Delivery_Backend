@@ -14,12 +14,7 @@ function adminAuthGuards(includeSubscriptionCheck: boolean) {
     | typeof AdminTenantResolverGuard
     | typeof TenantMatchGuard
     | typeof AdminSubscriptionGuard
-  > = [
-    JwtAuthGuard,
-    RolesGuard,
-    AdminTenantResolverGuard,
-    TenantMatchGuard,
-  ];
+  > = [JwtAuthGuard, RolesGuard, AdminTenantResolverGuard, TenantMatchGuard];
 
   if (includeSubscriptionCheck) {
     guards.push(AdminSubscriptionGuard);

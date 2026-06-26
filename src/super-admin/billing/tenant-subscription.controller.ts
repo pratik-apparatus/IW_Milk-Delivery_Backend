@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { Roles } from '../../auth/roles.decorator';
@@ -18,7 +27,8 @@ export class TenantSubscriptionController {
 
   @Get()
   @ApiOperation({
-    summary: 'Get tenant billing overview (available plans + current subscription)',
+    summary:
+      'Get tenant billing overview (available plans + current subscription)',
   })
   getStatus(@Param('tenantId') tenantId: string) {
     return this.subscriptionService.getStatus(tenantId);

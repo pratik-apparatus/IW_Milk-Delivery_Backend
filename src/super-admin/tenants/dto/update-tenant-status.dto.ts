@@ -17,4 +17,3 @@ export class UpdateTenantStatusDto {
   @MaxLength(300)
   reason?: string;
 }
-

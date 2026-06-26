@@ -193,10 +193,21 @@ export class TenantDbService {
     }
 
     return {
-      host: tenant.dbHost || this.configService.get<string>('DB_HOST') || 'localhost',
-      port: tenant.dbPort || Number(this.configService.get<string>('DB_PORT') || 5432),
-      user: tenant.dbUser || this.configService.get<string>('DB_USER') || 'postgres',
-      password: tenant.dbPassword || this.configService.get<string>('DB_PASSWORD') || undefined,
+      host:
+        tenant.dbHost ||
+        this.configService.get<string>('DB_HOST') ||
+        'localhost',
+      port:
+        tenant.dbPort ||
+        Number(this.configService.get<string>('DB_PORT') || 5432),
+      user:
+        tenant.dbUser ||
+        this.configService.get<string>('DB_USER') ||
+        'postgres',
+      password:
+        tenant.dbPassword ||
+        this.configService.get<string>('DB_PASSWORD') ||
+        undefined,
       database: tenant.dbName,
     };
   }
@@ -243,7 +254,9 @@ export class TenantDbService {
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
   }
 
-  private async databaseExists(config: TenantDbConnectionConfig): Promise<boolean> {
+  private async databaseExists(
+    config: TenantDbConnectionConfig,
+  ): Promise<boolean> {
     const adminConfig: TenantDbConnectionConfig = {
       ...config,
       database: 'postgres',

@@ -5,9 +5,7 @@ import { TENANT_BUSINESS_TABLES } from '../common/database/tenant-database.confi
  * Removes tenant business tables from the platform (control-plane) database.
  * Those tables belong only in per-tenant databases (milk_tenant_*).
  */
-export class DropTenantBusinessTablesFromPlatformDb1713262000000
-  implements MigrationInterface
-{
+export class DropTenantBusinessTablesFromPlatformDb1713262000000 implements MigrationInterface {
   name = 'DropTenantBusinessTablesFromPlatformDb1713262000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

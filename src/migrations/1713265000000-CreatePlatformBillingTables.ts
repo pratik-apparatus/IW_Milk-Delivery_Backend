@@ -1,9 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /** Platform billing tables (may already exist from DB_SYNC on older environments). */
-export class CreatePlatformBillingTables1713265000000
-  implements MigrationInterface
-{
+export class CreatePlatformBillingTables1713265000000 implements MigrationInterface {
   name = 'CreatePlatformBillingTables1713265000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

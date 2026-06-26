@@ -5,28 +5,28 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    constructor(configService: ConfigService) {
-        const jwtSecret = configService.get<string>('JWT_SECRET');
-        if (!jwtSecret) {
-            throw new UnauthorizedException('JWT_SECRET is not configured');
-        }
-
-        super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-            ignoreExpiration: false,
-            secretOrKey: jwtSecret,
-        });
+  constructor(configService: ConfigService) {
+    const jwtSecret = configService.get<string>('JWT_SECRET');
+    if (!jwtSecret) {
+      throw new UnauthorizedException('JWT_SECRET is not configured');
     }
 
-    async validate(payload: any) {
-        if (!payload?.sub || !payload?.role) {
-            throw new UnauthorizedException('Invalid token payload');
-        }
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: jwtSecret,
+    });
+  }
 
-        return {
-            id: payload.sub,
-            role: payload.role,
-            tenantId: payload.tenantId || null,
-        };
+  async validate(payload: any) {
+    if (!payload?.sub || !payload?.role) {
+      throw new UnauthorizedException('Invalid token payload');
     }
+
+    return {
+      id: payload.sub,
+      role: payload.role,
+      tenantId: payload.tenantId || null,
+    };
+  }
 }

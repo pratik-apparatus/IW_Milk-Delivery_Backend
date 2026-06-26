@@ -1,6 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsIn, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
+import {
+  IsIn,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 
 export class TenantRazorpayConfigDto {
   @ApiProperty({ example: 'rzp_live_xxx' })

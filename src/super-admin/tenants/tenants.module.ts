@@ -19,4 +19,3 @@ import { TenantDbService } from './tenant-db.service';
   exports: [TenantsService, TenantDbService],
 })
 export class TenantsModule {}
-

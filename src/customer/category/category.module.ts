@@ -3,7 +3,7 @@ import { CustomerCategoryController } from './category.controller';
 import { CategoryModule } from '../../admin/categories/categories.module';
 
 @Module({
-    imports: [CategoryModule],
-    controllers: [CustomerCategoryController],
+  imports: [CategoryModule],
+  controllers: [CustomerCategoryController],
 })
-export class CustomerCategoryModule { }
+export class CustomerCategoryModule {}

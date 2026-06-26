@@ -59,7 +59,9 @@ async function migrateTenantRecord(tenant: Tenant, bootstrapEmpty: boolean) {
   const label = `${tenant.businessName} (${connection.database} @ ${connection.host})`;
   console.log(`\nTenant: ${label}`);
 
-  const dataSource = createTenantDataSource(tenant, { includeMigrations: true });
+  const dataSource = createTenantDataSource(tenant, {
+    includeMigrations: true,
+  });
   await dataSource.initialize();
 
   try {
@@ -73,20 +75,30 @@ async function migrateTenantRecord(tenant: Tenant, bootstrapEmpty: boolean) {
 async function migrateTenantByDbName(dbName: string, bootstrapEmpty: boolean) {
   const pseudoTenant = createPseudoTenantForDirectMigration(dbName);
   const connection = resolveTenantDbConnection(pseudoTenant);
-  console.log(`\nTenant DB (direct): ${connection.database} @ ${connection.host}:${connection.port}`);
+  console.log(
+    `\nTenant DB (direct): ${connection.database} @ ${connection.host}:${connection.port}`,
+  );
 
-  const dataSource = createTenantDataSource(pseudoTenant, { includeMigrations: true });
+  const dataSource = createTenantDataSource(pseudoTenant, {
+    includeMigrations: true,
+  });
   await dataSource.initialize();
 
   try {
-    await ensureTenantSchemaBootstrapped(dataSource, connection.database, bootstrapEmpty);
+    await ensureTenantSchemaBootstrapped(
+      dataSource,
+      connection.database,
+      bootstrapEmpty,
+    );
     await runTenantMigrationsForDataSource(dataSource, connection.database);
   } finally {
     await dataSource.destroy();
   }
 }
 
-async function printTenantDiscoveryDiagnostics(tenantRepo: ReturnType<typeof AppDataSource.getRepository<Tenant>>) {
+async function printTenantDiscoveryDiagnostics(
+  tenantRepo: ReturnType<typeof AppDataSource.getRepository<Tenant>>,
+) {
   const total = await tenantRepo.count();
   const withDbName = await tenantRepo
     .createQueryBuilder('tenant')
@@ -99,12 +111,19 @@ async function printTenantDiscoveryDiagnostics(tenantRepo: ReturnType<typeof App
     .getCount();
 
   console.log(`Platform DB: ${process.env.DB_NAME} @ ${process.env.DB_HOST}`);
-  console.log(`Tenants in platform DB: ${total} total, ${withDbName} with dbName, ${decommissioned} decommissioned`);
+  console.log(
+    `Tenants in platform DB: ${total} total, ${withDbName} with dbName, ${decommissioned} decommissioned`,
+  );
 
   if (withDbName > 0) {
     const sample = await tenantRepo
       .createQueryBuilder('tenant')
-      .select(['tenant.businessName', 'tenant.dbName', 'tenant.dbHost', 'tenant.deletedAt'])
+      .select([
+        'tenant.businessName',
+        'tenant.dbName',
+        'tenant.dbHost',
+        'tenant.deletedAt',
+      ])
       .where('tenant.dbName IS NOT NULL')
       .orderBy('tenant.createdAt', 'ASC')
       .limit(5)
@@ -113,14 +132,20 @@ async function printTenantDiscoveryDiagnostics(tenantRepo: ReturnType<typeof App
     console.log('Registered tenant databases:');
     sample.forEach((tenant) => {
       const status = tenant.deletedAt ? 'decommissioned' : 'active';
-      console.log(`  - ${tenant.businessName}: ${tenant.dbName} @ ${tenant.dbHost || '(uses DB_HOST)'} [${status}]`);
+      console.log(
+        `  - ${tenant.businessName}: ${tenant.dbName} @ ${tenant.dbHost || '(uses DB_HOST)'} [${status}]`,
+      );
     });
   }
 
   if (process.env.TENANT_DB_HOST) {
-    console.log(`TENANT_DB_HOST override: ${process.env.TENANT_DB_HOST} (all tenant connections use this host)`);
+    console.log(
+      `TENANT_DB_HOST override: ${process.env.TENANT_DB_HOST} (all tenant connections use this host)`,
+    );
   } else {
-    console.log('Tip: set TENANT_DB_HOST=localhost in .env.dev if tenant DBs are on local Postgres.');
+    console.log(
+      'Tip: set TENANT_DB_HOST=localhost in .env.dev if tenant DBs are on local Postgres.',
+    );
   }
 }
 
@@ -160,9 +185,13 @@ Note:
 
     let tenants: Tenant[] = [];
     if (options.tenantId) {
-      const tenant = await tenantRepo.findOne({ where: { id: options.tenantId } });
+      const tenant = await tenantRepo.findOne({
+        where: { id: options.tenantId },
+      });
       if (!tenant?.dbName) {
-        throw new Error(`Tenant ${options.tenantId} not found or has no dbName configured.`);
+        throw new Error(
+          `Tenant ${options.tenantId} not found or has no dbName configured.`,
+        );
       }
       tenants = [tenant];
     } else if (options.all) {
@@ -182,9 +211,13 @@ Note:
       await printTenantDiscoveryDiagnostics(tenantRepo);
       console.log('\nNo tenant databases matched the migration query.');
       if (!options.activeOnly) {
-        console.log('Use --db-name=milk_tenant_001 for a local DB not listed above.');
+        console.log(
+          'Use --db-name=milk_tenant_001 for a local DB not listed above.',
+        );
       } else {
-        console.log('Try again without --active-only to include decommissioned tenants.');
+        console.log(
+          'Try again without --active-only to include decommissioned tenants.',
+        );
       }
       await AppDataSource.destroy();
       process.exit(0);
@@ -196,7 +229,9 @@ Note:
       await migrateTenantRecord(tenant, options.bootstrapEmpty);
     }
 
-    console.log(`\nTenant migrations completed for ${tenants.length} database(s).`);
+    console.log(
+      `\nTenant migrations completed for ${tenants.length} database(s).`,
+    );
     process.exit(0);
   } catch (error) {
     console.error('Tenant migration failed:', error);

@@ -26,9 +26,7 @@ export function normalizeIntegrationConfig(
   const razorpayInput = (raw.razorpay || {}) as Record<string, unknown>;
 
   const keyId =
-    (razorpayInput.keyId as string) ||
-    (raw.razorpayKeyId as string) ||
-    '';
+    (razorpayInput.keyId as string) || (raw.razorpayKeyId as string) || '';
   const keySecret =
     (razorpayInput.keySecret as string) ||
     (raw.razorpayKeySecret as string) ||

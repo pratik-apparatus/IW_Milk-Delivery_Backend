@@ -26,4 +26,3 @@ export class AddSuperAdminRole1713257000000 implements MigrationInterface {
     // PostgreSQL enum value removal is not safely reversible.
   }
 }
-

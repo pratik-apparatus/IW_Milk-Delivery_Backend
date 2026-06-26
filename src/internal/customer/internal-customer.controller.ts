@@ -7,7 +7,9 @@ import { InternalServiceGuard } from '../../auth/internal-service.guard';
 @Controller('internal/customer')
 @UseGuards(InternalServiceGuard)
 export class InternalCustomerController {
-  constructor(private readonly internalCustomerService: InternalCustomerService) {}
+  constructor(
+    private readonly internalCustomerService: InternalCustomerService,
+  ) {}
 
   @Post('find-or-create')
   async findOrCreate(
@@ -25,4 +27,3 @@ export class InternalCustomerController {
     return this.internalCustomerService.getAuthData(dto.phone);
   }
 }
-

@@ -1,14 +1,6 @@
-import {
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import {
-  DataSource,
-  EntityTarget,
-  ObjectLiteral,
-  Repository,
-} from 'typeorm';
+import { DataSource, EntityTarget, ObjectLiteral, Repository } from 'typeorm';
 import { TenantContextService } from '../services/tenant-context.service';
 import { TenantDatabaseService } from './tenant-database.service';
 

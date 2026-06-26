@@ -9,7 +9,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { Roles } from '../../auth/roles.decorator';
 import { RolesGuard } from '../../auth/roles.guard';
@@ -71,7 +76,9 @@ export class TenantsController {
   }
 
   @Get(':id/db/health')
-  @ApiOperation({ summary: 'Get tenant database health and monitoring metrics' })
+  @ApiOperation({
+    summary: 'Get tenant database health and monitoring metrics',
+  })
   @ApiResponse({ status: 200, description: 'Database health snapshot' })
   getDbHealth(@Param('id') id: string) {
     return this.tenantDbService.getDbHealth(id);
@@ -86,8 +93,14 @@ export class TenantsController {
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update tenant status (activate/suspend/inactive)' })
-  @ApiResponse({ status: 200, description: 'Tenant status updated successfully' })
-  updateStatus(@Param('id') id: string, @Body() payload: UpdateTenantStatusDto) {
+  @ApiResponse({
+    status: 200,
+    description: 'Tenant status updated successfully',
+  })
+  updateStatus(
+    @Param('id') id: string,
+    @Body() payload: UpdateTenantStatusDto,
+  ) {
     return this.tenantsService.updateStatus(id, payload);
   }
 
@@ -100,20 +113,28 @@ export class TenantsController {
 
   @Post(':id/provision')
   @ApiOperation({ summary: 'Provision tenant database and activate tenant' })
-  @ApiResponse({ status: 200, description: 'Tenant provisioning started/completed' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tenant provisioning started/completed',
+  })
   provision(@Param('id') id: string) {
     return this.tenantsService.provisionTenant(id);
   }
 
   @Post(':id/decommission')
   @ApiOperation({ summary: 'Decommission tenant and deactivate tenant admins' })
-  @ApiResponse({ status: 200, description: 'Tenant decommissioned successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tenant decommissioned successfully',
+  })
   decommission(@Param('id') id: string) {
     return this.tenantsService.decommissionTenant(id);
   }
 
   @Post(':id/restore')
-  @ApiOperation({ summary: 'Restore a decommissioned tenant and reactivate admins' })
+  @ApiOperation({
+    summary: 'Restore a decommissioned tenant and reactivate admins',
+  })
   @ApiResponse({ status: 200, description: 'Tenant restored successfully' })
   restore(@Param('id') id: string) {
     return this.tenantsService.restoreTenant(id);
@@ -128,9 +149,11 @@ export class TenantsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Decommission tenant (soft delete)' })
-  @ApiResponse({ status: 200, description: 'Tenant decommissioned successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tenant decommissioned successfully',
+  })
   remove(@Param('id') id: string) {
     return this.tenantsService.remove(id);
   }
 }
-

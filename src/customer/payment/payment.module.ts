@@ -5,8 +5,8 @@ import { WalletModule } from '../wallet/wallet.module';
 import { CommonModule } from '../../common/common.module';
 
 @Module({
-    imports: [WalletModule, CommonModule],
-    controllers: [PaymentController],
-    providers: [PaymentService],
+  imports: [WalletModule, CommonModule],
+  controllers: [PaymentController],
+  providers: [PaymentService],
 })
-export class PaymentModule { }
+export class PaymentModule {}

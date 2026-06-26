@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateTenantProvisioningJobsTable1713258000000
-  implements MigrationInterface
-{
+export class CreateTenantProvisioningJobsTable1713258000000 implements MigrationInterface {
   name = 'CreateTenantProvisioningJobsTable1713258000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -31,4 +29,3 @@ export class CreateTenantProvisioningJobsTable1713258000000
     );
   }
 }
-

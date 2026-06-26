@@ -40,4 +40,3 @@ export class TenantProvisioningJob {
   @UpdateDateColumn()
   updatedAt: Date;
 }
-

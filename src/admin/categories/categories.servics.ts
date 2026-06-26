@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Category } from '../../entities/categories.entity';
 import { CreateCategoryDto } from '../../dto/categories.dto';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
@@ -7,7 +11,10 @@ import { applySearch } from 'src/common/utils/search.util';
 import { NoRecordsFoundException } from 'src/common/exceptions/no-records-found.exception';
 import { TenantContextService } from 'src/common/services/tenant-context.service';
 import { TenantRepositoryService } from 'src/common/database/tenant-repository.service';
-import { applyTenantFilter, tenantWhere } from 'src/common/utils/tenant-scope.util';
+import {
+  applyTenantFilter,
+  tenantWhere,
+} from 'src/common/utils/tenant-scope.util';
 
 @Injectable()
 export class CategoryService {
@@ -29,7 +36,10 @@ export class CategoryService {
       throw new ConflictException('Category already exists');
     }
 
-    const category = categoryRepo.create({ ...dto, tenantId: dedicated ? null : tenantId });
+    const category = categoryRepo.create({
+      ...dto,
+      tenantId: dedicated ? null : tenantId,
+    });
     return categoryRepo.save(category);
   }
 

@@ -11,35 +11,36 @@ import { AdminSubscriptionGuard } from './admin-subscription.guard';
 
 @Global()
 @Module({
-    imports: [
-        PassportModule.register({ defaultStrategy: 'jwt' }),
-        JwtModule.registerAsync({
-            imports: [ConfigModule],
-            useFactory: (configService: ConfigService) => ({
-                secret: configService.get<string>('JWT_SECRET') || 'your-secret-key',
-                signOptions: {
-                    expiresIn: (configService.get<string>('ACCESS_TOKEN_EXPIRY') || '7d') as any,
-                },
-            }),
-            inject: [ConfigService],
-        }),
-    ],
-    providers: [
-        JwtStrategy,
-        JwtAuthGuard,
-        RolesGuard,
-        TenantMatchGuard,
-        AdminTenantResolverGuard,
-        AdminSubscriptionGuard,
-    ],
-    exports: [
-        PassportModule,
-        JwtModule,
-        JwtAuthGuard,
-        RolesGuard,
-        TenantMatchGuard,
-        AdminTenantResolverGuard,
-        AdminSubscriptionGuard,
-    ],
+  imports: [
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET') || 'your-secret-key',
+        signOptions: {
+          expiresIn: (configService.get<string>('ACCESS_TOKEN_EXPIRY') ||
+            '7d') as any,
+        },
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+  providers: [
+    JwtStrategy,
+    JwtAuthGuard,
+    RolesGuard,
+    TenantMatchGuard,
+    AdminTenantResolverGuard,
+    AdminSubscriptionGuard,
+  ],
+  exports: [
+    PassportModule,
+    JwtModule,
+    JwtAuthGuard,
+    RolesGuard,
+    TenantMatchGuard,
+    AdminTenantResolverGuard,
+    AdminSubscriptionGuard,
+  ],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -11,4 +11,4 @@ import { InternalServiceGuard } from '../../auth/internal-service.guard';
   providers: [InternalCustomerService, InternalServiceGuard],
   exports: [InternalCustomerService],
 })
-export class InternalCustomerModule { }
+export class InternalCustomerModule {}

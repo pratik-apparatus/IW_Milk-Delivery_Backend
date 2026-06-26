@@ -10,4 +10,3 @@ export class GetLoginDataDto {
   @IsNotEmpty()
   role: Role;
 }
-

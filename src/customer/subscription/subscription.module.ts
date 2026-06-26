@@ -6,9 +6,9 @@ import { WalletModule } from '../wallet/wallet.module';
 import { OrderModule } from '../order/order.module';
 
 @Module({
-    imports: [WalletModule, OrderModule],
-    controllers: [SubscriptionController],
-    providers: [SubscriptionService, SubscriptionSchedulerService],
-    exports: [SubscriptionService, SubscriptionSchedulerService],
+  imports: [WalletModule, OrderModule],
+  controllers: [SubscriptionController],
+  providers: [SubscriptionService, SubscriptionSchedulerService],
+  exports: [SubscriptionService, SubscriptionSchedulerService],
 })
-export class SubscriptionModule { }
+export class SubscriptionModule {}

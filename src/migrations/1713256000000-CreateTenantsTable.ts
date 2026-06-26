@@ -40,4 +40,3 @@ export class CreateTenantsTable1713256000000 implements MigrationInterface {
     await queryRunner.query(`DROP TYPE "public"."tenants_status_enum"`);
   }
 }
-

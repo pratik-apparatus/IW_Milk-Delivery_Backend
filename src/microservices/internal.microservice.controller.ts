@@ -33,7 +33,9 @@ export class InternalMicroserviceController {
   }
 
   @MessagePattern(BackendPatterns.AUTH_GET_LOGIN_DATA)
-  getLoginData(@Payload() payload: RpcEnvelope<{ identifier: string; role: string }>) {
+  getLoginData(
+    @Payload() payload: RpcEnvelope<{ identifier: string; role: string }>,
+  ) {
     this.validate(payload, { allowMissingTenant: true });
     return this.internalAuthService.getLoginData(
       payload.data.identifier,
@@ -48,7 +50,9 @@ export class InternalMicroserviceController {
   }
 
   @MessagePattern(BackendPatterns.AUTH_VALIDATE_EMAIL)
-  validateEmail(@Payload() payload: RpcEnvelope<{ email: string; role?: string }>) {
+  validateEmail(
+    @Payload() payload: RpcEnvelope<{ email: string; role?: string }>,
+  ) {
     this.validate(payload, { allowMissingTenant: true });
     return this.internalAuthService.validateEmail(
       payload.data.email,
@@ -57,7 +61,9 @@ export class InternalMicroserviceController {
   }
 
   @MessagePattern(BackendPatterns.AUTH_UPDATE_PASSWORD)
-  updatePassword(@Payload() payload: RpcEnvelope<{ email: string; newPassword: string }>) {
+  updatePassword(
+    @Payload() payload: RpcEnvelope<{ email: string; newPassword: string }>,
+  ) {
     this.validate(payload, { allowMissingTenant: true });
     return this.internalAuthService.updatePassword(
       payload.data.email,
@@ -82,9 +88,13 @@ export class InternalMicroserviceController {
   }
 
   @MessagePattern(BackendPatterns.AUTH_ROTATE_REFRESH_TOKEN)
-  rotateRefreshToken(@Payload() payload: RpcEnvelope<{ refreshToken: string }>) {
+  rotateRefreshToken(
+    @Payload() payload: RpcEnvelope<{ refreshToken: string }>,
+  ) {
     this.validate(payload, { allowMissingTenant: true });
-    return this.refreshTokenService.validateAndRotate(payload.data.refreshToken);
+    return this.refreshTokenService.validateAndRotate(
+      payload.data.refreshToken,
+    );
   }
 
   @MessagePattern(BackendPatterns.CUSTOMER_FIND_OR_CREATE)

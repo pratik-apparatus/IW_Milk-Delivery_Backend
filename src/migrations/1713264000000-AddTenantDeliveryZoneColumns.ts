@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddTenantDeliveryZoneColumns1713264000000
-  implements MigrationInterface
-{
+export class AddTenantDeliveryZoneColumns1713264000000 implements MigrationInterface {
   name = 'AddTenantDeliveryZoneColumns1713264000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
