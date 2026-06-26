@@ -6,10 +6,9 @@ import { AdminProfileService } from './profile.services';
 import { AdminProfileController } from './profile.controller';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Admin, User])],
-    controllers: [AdminProfileController],
-    providers: [AdminProfileService],
-    exports: [AdminProfileService],
+  imports: [TypeOrmModule.forFeature([Admin, User])],
+  controllers: [AdminProfileController],
+  providers: [AdminProfileService],
+  exports: [AdminProfileService],
 })
-export class AdminProfileModule { }
-
+export class AdminProfileModule {}

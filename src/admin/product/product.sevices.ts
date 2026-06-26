@@ -7,14 +7,17 @@ import { applySearch } from '../../common/utils/search.util';
 import { NoRecordsFoundException } from '../../common/exceptions/no-records-found.exception';
 import { TenantContextService } from '../../common/services/tenant-context.service';
 import { TenantRepositoryService } from '../../common/database/tenant-repository.service';
-import { applyTenantFilter, tenantWhere } from '../../common/utils/tenant-scope.util';
+import {
+  applyTenantFilter,
+  tenantWhere,
+} from '../../common/utils/tenant-scope.util';
 
 @Injectable()
 export class ProductService {
   constructor(
     private readonly tenantRepos: TenantRepositoryService,
     private readonly tenantContext: TenantContextService,
-  ) { }
+  ) {}
 
   async create(dto: CreateProductDto) {
     const tenantId = this.tenantContext.requireTenantId();
@@ -36,7 +39,8 @@ export class ProductService {
       const productRepo = await this.tenantRepos.getRepository(Product);
       const { categoryId, minPrice, maxPrice, search, page, limit } = query;
 
-      const qb = productRepo.createQueryBuilder('product')
+      const qb = productRepo
+        .createQueryBuilder('product')
         .leftJoinAndSelect('product.category', 'category');
       applyTenantFilter(qb, tenantId, 'product', dedicated);
 
@@ -75,7 +79,7 @@ export class ProductService {
     const productRepo = await this.tenantRepos.getRepository(Product);
     const product = await productRepo.findOne({
       where: tenantWhere(tenantId, { id }, dedicated),
-      relations: ['category']
+      relations: ['category'],
     });
     if (!product) throw new NotFoundException('Product not found');
     return product;
@@ -87,7 +91,7 @@ export class ProductService {
     const productRepo = await this.tenantRepos.getRepository(Product);
     const product = await productRepo.find({
       where: tenantWhere(tenantId, { categoryId }, dedicated),
-      relations: ['category']
+      relations: ['category'],
     });
     if (!product) throw new NotFoundException('Product not found');
     return product;
@@ -103,13 +107,19 @@ export class ProductService {
 
     if (dto.quantity !== undefined && dto.quantity !== existing.quantity) {
       const delta = dto.quantity - existing.quantity;
-      updateData.remainingQuantity = Math.max(0, existing.remainingQuantity + delta);
+      updateData.remainingQuantity = Math.max(
+        0,
+        existing.remainingQuantity + delta,
+      );
     }
 
     const tenantId = this.tenantContext.requireTenantId();
     const dedicated = this.tenantContext.usesDedicatedDatabase();
     const productRepo = await this.tenantRepos.getRepository(Product);
-    await productRepo.update(tenantWhere(tenantId, { id }, dedicated), updateData);
+    await productRepo.update(
+      tenantWhere(tenantId, { id }, dedicated),
+      updateData,
+    );
 
     return this.findById(id);
   }

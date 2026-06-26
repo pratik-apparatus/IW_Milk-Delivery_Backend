@@ -1,4 +1,9 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -40,7 +45,10 @@ import { MicroservicesModule } from './microservices/microservices.module';
 import { TenantContextMiddleware } from './common/middleware/tenant-context.middleware';
 import { EnabledAppsMiddleware } from './common/middleware/enabled-apps.middleware';
 import { getConfigModuleOptions } from './config/load-env';
-import { getTypeOrmLogging, isDbSyncEnabled } from './common/database/typeorm-options.util';
+import {
+  getTypeOrmLogging,
+  isDbSyncEnabled,
+} from './common/database/typeorm-options.util';
 
 @Module({
   imports: [
@@ -53,11 +61,11 @@ import { getTypeOrmLogging, isDbSyncEnabled } from './common/database/typeorm-op
         // Platform schema: npm run migration:platform:run:dev
         // DB_SYNC=true is optional local escape hatch only (not recommended).
         type: 'postgres',
-        host: configService.get('DB_HOST') || 'localhost',
-        port: Number(configService.get('DB_PORT')) || 5432,
-        username: configService.get('DB_USER') || 'postgres',
-        password: configService.get('DB_PASSWORD') || 'postgres',
-        database: configService.get('DB_NAME') || 'milk_delivery',
+        host: configService.get('DB_HOST'),
+        port: Number(configService.get('DB_PORT')),
+        username: configService.get('DB_USER'),
+        password: configService.get('DB_PASSWORD'),
+        database: configService.get('DB_NAME'),
         entities: PLATFORM_ENTITIES,
         synchronize: isDbSyncEnabled(configService, 'DB_SYNC'),
         logging: getTypeOrmLogging(configService),
@@ -94,10 +102,12 @@ import { getTypeOrmLogging, isDbSyncEnabled } from './common/database/typeorm-op
     TenantsModule,
     BillingModule,
     MicroservicesModule,
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 30,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 30,
+      },
+    ]),
   ],
   controllers: [AppController],
   providers: [

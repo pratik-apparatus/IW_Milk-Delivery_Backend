@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddTenantIdAndPlatformTables1713260000000
-  implements MigrationInterface
-{
+export class AddTenantIdAndPlatformTables1713260000000 implements MigrationInterface {
   name = 'AddTenantIdAndPlatformTables1713260000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -37,9 +35,13 @@ export class AddTenantIdAndPlatformTables1713260000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "tenants" DROP COLUMN IF EXISTS "deletedAt"`);
+    await queryRunner.query(
+      `ALTER TABLE "tenants" DROP COLUMN IF EXISTS "deletedAt"`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "refresh_tokens"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_user_tenantId"`);
-    await queryRunner.query(`ALTER TABLE "user" DROP COLUMN IF EXISTS "tenantId"`);
+    await queryRunner.query(
+      `ALTER TABLE "user" DROP COLUMN IF EXISTS "tenantId"`,
+    );
   }
 }

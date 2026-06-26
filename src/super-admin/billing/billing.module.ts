@@ -24,6 +24,10 @@ import { BillingWebhookController } from './billing-webhook.controller';
     TenantSubscriptionService,
     TenantBillingPaymentService,
   ],
-  exports: [TenantPlanService, TenantSubscriptionService, TenantBillingPaymentService],
+  exports: [
+    TenantPlanService,
+    TenantSubscriptionService,
+    TenantBillingPaymentService,
+  ],
 })
 export class BillingModule {}

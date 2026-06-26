@@ -65,7 +65,9 @@ export class MailClientService {
     try {
       return await this.send(MailPatterns.NOTIFICATION_SEND_BULK, payload);
     } catch (error: any) {
-      this.logger.warn(`Bulk notification RPC failed: ${error?.message || error}`);
+      this.logger.warn(
+        `Bulk notification RPC failed: ${error?.message || error}`,
+      );
       return { success: false, sentTo: 0 };
     }
   }
@@ -80,7 +82,9 @@ export class MailClientService {
     try {
       return await this.send(MailPatterns.NOTIFICATION_SEND_CUSTOM, payload);
     } catch (error: any) {
-      this.logger.warn(`Custom notification RPC failed: ${error?.message || error}`);
+      this.logger.warn(
+        `Custom notification RPC failed: ${error?.message || error}`,
+      );
       return { success: false, sentTo: 0 };
     }
   }

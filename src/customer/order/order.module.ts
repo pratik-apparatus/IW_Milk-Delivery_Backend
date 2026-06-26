@@ -6,9 +6,9 @@ import { TrackingModule } from '../tracking/tracking.module';
 import { CommonModule } from '../../common/common.module';
 
 @Module({
-    imports: [WalletModule, TrackingModule, CommonModule],
-    controllers: [OrderController],
-    providers: [OrderService],
-    exports: [OrderService],
+  imports: [WalletModule, TrackingModule, CommonModule],
+  controllers: [OrderController],
+  providers: [OrderService],
+  exports: [OrderService],
 })
-export class OrderModule { }
+export class OrderModule {}

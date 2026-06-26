@@ -31,7 +31,7 @@ export class DeliveryPartner {
   @Column({ type: 'boolean', default: false })
   isBanned: boolean;
 
-  @Column({ type:'int',default:0})
+  @Column({ type: 'int', default: 0 })
   CurrentOrder: number;
 
   @Column({ nullable: true })

@@ -6,7 +6,12 @@ import { InternalMicroserviceController } from './internal.microservice.controll
 import { MailClientModule } from './mail-client.module';
 
 @Module({
-  imports: [InternalAuthModule, InternalCustomerModule, InternalAdminModule, MailClientModule],
+  imports: [
+    InternalAuthModule,
+    InternalCustomerModule,
+    InternalAdminModule,
+    MailClientModule,
+  ],
   controllers: [InternalMicroserviceController],
 })
 export class MicroservicesModule {}

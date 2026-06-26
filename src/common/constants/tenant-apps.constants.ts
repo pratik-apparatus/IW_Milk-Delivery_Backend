@@ -2,7 +2,10 @@
 export const DEFAULT_TENANT_APPS = ['CUSTOMER_APP', 'ADMIN_APP'] as const;
 
 /** Optional modules super-admin can enable per tenant. */
-export const OPTIONAL_TENANT_APPS = ['DELIVERY_APP', 'SUBSCRIPTIONS_MODULE'] as const;
+export const OPTIONAL_TENANT_APPS = [
+  'DELIVERY_APP',
+  'SUBSCRIPTIONS_MODULE',
+] as const;
 
 export const ALL_TENANT_APPS = [
   ...DEFAULT_TENANT_APPS,

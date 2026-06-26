@@ -33,7 +33,9 @@ export class AdminBillingController {
   }
 
   @Post('verify-payment')
-  @ApiOperation({ summary: 'Verify Razorpay payment and activate subscription' })
+  @ApiOperation({
+    summary: 'Verify Razorpay payment and activate subscription',
+  })
   verifyPayment(@Body() dto: VerifyTenantBillingPaymentDto) {
     const tenantId = this.tenantContext.requireTenantId();
     return this.billingPayment.verifyPaymentForTenant(

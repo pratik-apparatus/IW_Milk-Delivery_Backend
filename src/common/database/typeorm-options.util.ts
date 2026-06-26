@@ -8,7 +8,9 @@ export function isDbSyncEnabled(
 }
 
 /** Query logging is opt-in via DB_LOGGING=true (disabled by default). */
-export function getTypeOrmLogging(configService: ConfigService): boolean | ('error' | 'warn')[] {
+export function getTypeOrmLogging(
+  configService: ConfigService,
+): boolean | ('error' | 'warn')[] {
   if (configService.get('DB_LOGGING') === 'true') {
     return true;
   }

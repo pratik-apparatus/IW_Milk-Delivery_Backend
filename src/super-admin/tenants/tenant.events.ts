@@ -7,4 +7,3 @@ export enum TenantLifecycleEventType {
   TENANT_DECOMMISSIONED = 'TENANT_DECOMMISSIONED',
   TENANT_DELETED = 'TENANT_DELETED',
 }
-

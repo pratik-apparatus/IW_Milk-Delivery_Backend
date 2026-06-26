@@ -10,59 +10,59 @@ import { AdminProtected } from '../../auth/admin-protected.decorator';
 @AdminProtected()
 @Controller('admin/reports')
 export class ReportsController {
-    constructor(private readonly reportsService: ReportsService) { }
+  constructor(private readonly reportsService: ReportsService) {}
 
-    @Get('overview')
-    @ApiOperation({ summary: 'Show dashboard summary numbers' })
-    async getOverview() {
-        return this.reportsService.getOverview();
-    }
+  @Get('overview')
+  @ApiOperation({ summary: 'Show dashboard summary numbers' })
+  async getOverview() {
+    return this.reportsService.getOverview();
+  }
 
-    @Get('sales')
-    @ApiOperation({ summary: 'Used for daily / weekly / monthly sales graph' })
-    async getSalesReport(@Query() query: SalesReportQueryDto) {
-        return this.reportsService.getSalesReport(query);
-    }
+  @Get('sales')
+  @ApiOperation({ summary: 'Used for daily / weekly / monthly sales graph' })
+  async getSalesReport(@Query() query: SalesReportQueryDto) {
+    return this.reportsService.getSalesReport(query);
+  }
 
-    @Get('products/best-selling')
-    @ApiOperation({ summary: 'Identify top selling products' })
-    async getBestSelling(@Query() query: PaginationQueryDto) {
-        return this.reportsService.getBestSellingProducts(query);
-    }
+  @Get('products/best-selling')
+  @ApiOperation({ summary: 'Identify top selling products' })
+  async getBestSelling(@Query() query: PaginationQueryDto) {
+    return this.reportsService.getBestSellingProducts(query);
+  }
 
-    @Get('products/least-selling')
-    @ApiOperation({ summary: 'Identify low performing products' })
-    async getLeastSelling(@Query() query: PaginationQueryDto) {
-        return this.reportsService.getLeastSellingProducts(query);
-    }
+  @Get('products/least-selling')
+  @ApiOperation({ summary: 'Identify low performing products' })
+  async getLeastSelling(@Query() query: PaginationQueryDto) {
+    return this.reportsService.getLeastSellingProducts(query);
+  }
 
-    @Get('subscriptions/trends')
-    @ApiOperation({ summary: 'Graph showing new subscriptions over time' })
-    async getSubscriptionTrends(@Query() query: BaseReportQueryDto) {
-        return this.reportsService.getSubscriptionTrends(query);
-    }
+  @Get('subscriptions/trends')
+  @ApiOperation({ summary: 'Graph showing new subscriptions over time' })
+  async getSubscriptionTrends(@Query() query: BaseReportQueryDto) {
+    return this.reportsService.getSubscriptionTrends(query);
+  }
 
-    @Get('payments')
-    @ApiOperation({ summary: 'Fetch all payment transactions for audit' })
-    async getPayments(@Query() query: PaginationQueryDto) {
-        return this.reportsService.getPaymentTransactions(query);
-    }
+  @Get('payments')
+  @ApiOperation({ summary: 'Fetch all payment transactions for audit' })
+  async getPayments(@Query() query: PaginationQueryDto) {
+    return this.reportsService.getPaymentTransactions(query);
+  }
 
-    @Delete('payments/:paymentId')
-    @ApiOperation({ summary: 'Delete payment transaction' })
-    async deletePayment(@Param('paymentId') paymentId: string) {
-        return this.reportsService.deletePaymentTransactions(paymentId);
-    }
+  @Delete('payments/:paymentId')
+  @ApiOperation({ summary: 'Delete payment transaction' })
+  async deletePayment(@Param('paymentId') paymentId: string) {
+    return this.reportsService.deletePaymentTransactions(paymentId);
+  }
 
-    @Get('delivery-partners/performance')
-    @ApiOperation({ summary: 'Track Partner Performance' })
-    async getPartnerPerformance(@Query() query: PaginationQueryDto) {
-        return this.reportsService.getDeliveryPartnerPerformance(query);
-    }
+  @Get('delivery-partners/performance')
+  @ApiOperation({ summary: 'Track Partner Performance' })
+  async getPartnerPerformance(@Query() query: PaginationQueryDto) {
+    return this.reportsService.getDeliveryPartnerPerformance(query);
+  }
 
-    @Delete()
-    @ApiOperation({ summary: 'Clear failed payment reports from history' })
-    async clearReports() {
-        return this.reportsService.clearReports();
-    }
+  @Delete()
+  @ApiOperation({ summary: 'Clear failed payment reports from history' })
+  async clearReports() {
+    return this.reportsService.clearReports();
+  }
 }

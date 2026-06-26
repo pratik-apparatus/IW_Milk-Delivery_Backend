@@ -8,13 +8,9 @@ import { User } from '../entities/user.entity';
 import { CommonModule } from '../common/common.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([User]),
-        HttpModule,
-        CommonModule,
-    ],
-    controllers: [DeliveryPartnerController],
-    providers: [DeliveryPartnerService, LocationService],
-    exports: [DeliveryPartnerService, LocationService],
+  imports: [TypeOrmModule.forFeature([User]), HttpModule, CommonModule],
+  controllers: [DeliveryPartnerController],
+  providers: [DeliveryPartnerService, LocationService],
+  exports: [DeliveryPartnerService, LocationService],
 })
-export class DeliveryPartnerAppModule { }
+export class DeliveryPartnerAppModule {}

@@ -50,11 +50,7 @@ export class AppConfigService {
     };
   }
 
-  async update(
-    tenantId: string,
-    dto: UpdateAppConfigDto,
-    logoUrl?: string,
-  ) {
+  async update(tenantId: string, dto: UpdateAppConfigDto, logoUrl?: string) {
     const appConfigRepo = await this.repo(tenantId);
     const config = await appConfigRepo.findOne({ where: {} });
     if (!config) {
@@ -87,11 +83,7 @@ export class AppConfigService {
     };
   }
 
-  async upsert(
-    tenantId: string,
-    dto: UpdateAppConfigDto,
-    logoUrl?: string,
-  ) {
+  async upsert(tenantId: string, dto: UpdateAppConfigDto, logoUrl?: string) {
     const appConfigRepo = await this.repo(tenantId);
     const existing = await appConfigRepo.findOne({ where: {} });
     if (existing) {

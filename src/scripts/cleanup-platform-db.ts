@@ -14,7 +14,9 @@ async function cleanupPlatformDb() {
       console.log(`Dropped tenant table (if existed): ${table}`);
     }
 
-    console.log('Platform DB cleanup complete. Only control-plane tables should remain.');
+    console.log(
+      'Platform DB cleanup complete. Only control-plane tables should remain.',
+    );
   } catch (error) {
     console.error('Platform DB cleanup failed:', error);
     process.exit(1);

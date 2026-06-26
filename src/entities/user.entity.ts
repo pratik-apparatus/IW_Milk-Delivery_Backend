@@ -55,4 +55,3 @@ export class User {
   @OneToOne(() => Admin, (admin) => admin.user)
   admin: Admin;
 }
-

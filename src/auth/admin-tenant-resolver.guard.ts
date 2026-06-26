@@ -37,7 +37,9 @@ export class AdminTenantResolverGuard implements CanActivate {
     }
 
     if (user.tenantId && user.tenantId !== tenantId) {
-      throw new ForbiddenException('Token tenant does not match request tenant');
+      throw new ForbiddenException(
+        'Token tenant does not match request tenant',
+      );
     }
 
     if (!request.tenantId || request.tenantId !== tenantId) {

@@ -15,7 +15,10 @@ import { TenantDatabaseModule } from './database/tenant-database.module';
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([Tenant, TenantSubscription]), TenantDatabaseModule],
+  imports: [
+    TypeOrmModule.forFeature([Tenant, TenantSubscription]),
+    TenantDatabaseModule,
+  ],
   providers: [
     NotificationIntegrationService,
     TenantIntegrationConfigService,

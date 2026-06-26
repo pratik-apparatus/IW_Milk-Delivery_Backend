@@ -1,7 +1,11 @@
 const SKIP_RECURSE_KEYS = new Set(['meta', 'pagination', 'tokens', 'billing']);
 
 /** Fill null tenantId on API payloads when data lives in a dedicated tenant database. */
-export function enrichWithTenantId<T>(value: T, tenantId: string, depth = 0): T {
+export function enrichWithTenantId<T>(
+  value: T,
+  tenantId: string,
+  depth = 0,
+): T {
   if (!tenantId || value === null || value === undefined || depth > 6) {
     return value;
   }

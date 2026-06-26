@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, Role } from '../../entities/user.entity';
@@ -17,11 +23,13 @@ export class InternalAuthService {
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
     private readonly tenantSubscriptionService: TenantSubscriptionService,
-  ) { }
+  ) {}
 
   async getLoginData(identifier: string, role: Role) {
-    this.logger.log(`Getting login data for identifier: ${identifier}, role: ${role}`);
-    
+    this.logger.log(
+      `Getting login data for identifier: ${identifier}, role: ${role}`,
+    );
+
     // Find user by email or username
     const user = await this.userRepository.findOne({
       where: [
@@ -33,15 +41,14 @@ export class InternalAuthService {
     if (!user) {
       // Check if user exists but with different conditions
       const userWithoutRoleCheck = await this.userRepository.findOne({
-        where: [
-          { email: identifier },
-          { username: identifier },
-        ],
+        where: [{ email: identifier }, { username: identifier }],
       });
 
       if (userWithoutRoleCheck) {
         if (userWithoutRoleCheck.role !== role) {
-          this.logger.warn(`User found but role mismatch. Expected: ${role}, Found: ${userWithoutRoleCheck.role}`);
+          this.logger.warn(
+            `User found but role mismatch. Expected: ${role}, Found: ${userWithoutRoleCheck.role}`,
+          );
         }
         if (!userWithoutRoleCheck.isActive) {
           this.logger.warn(`User found but is not active: ${identifier}`);
@@ -49,7 +56,7 @@ export class InternalAuthService {
       } else {
         this.logger.warn(`User not found with identifier: ${identifier}`);
       }
-      
+
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -91,7 +98,9 @@ export class InternalAuthService {
         if (!inactiveOrWrongRole.isActive) {
           this.logger.warn(`Admin user is inactive: ${identifier}`);
         }
-        if (![Role.ADMIN, Role.SUPER_ADMIN].includes(inactiveOrWrongRole.role)) {
+        if (
+          ![Role.ADMIN, Role.SUPER_ADMIN].includes(inactiveOrWrongRole.role)
+        ) {
           this.logger.warn(
             `User found but is not an admin: ${identifier}, role=${inactiveOrWrongRole.role}`,
           );
@@ -128,7 +137,9 @@ export class InternalAuthService {
       }
     }
 
-    this.logger.log(`Admin login data retrieved successfully for user: ${user.id}`);
+    this.logger.log(
+      `Admin login data retrieved successfully for user: ${user.id}`,
+    );
     return {
       userId: user.id,
       identifier: user.email || user.username,
@@ -192,27 +203,32 @@ export class InternalAuthService {
     const { email, phone, username } = dto;
 
     if (email) {
-      const existingUser = await this.userRepository.findOne({ where: { email } });
+      const existingUser = await this.userRepository.findOne({
+        where: { email },
+      });
       if (existingUser) {
         throw new ConflictException('Email already exists');
       }
     }
 
     if (username) {
-      const existingUser = await this.userRepository.findOne({ where: { username } });
+      const existingUser = await this.userRepository.findOne({
+        where: { username },
+      });
       if (existingUser) {
         throw new ConflictException('Username already exists');
       }
     }
 
     if (phone) {
-      const existingUser = await this.userRepository.findOne({ where: { phone } });
+      const existingUser = await this.userRepository.findOne({
+        where: { phone },
+      });
       if (existingUser) {
         throw new ConflictException('Phone already exists');
       }
     }
 
-    
     const user = this.userRepository.create({
       ...dto,
       password: dto.password ? await bcrypt.hash(dto.password, 10) : null,
@@ -229,4 +245,3 @@ export class InternalAuthService {
     };
   }
 }
-

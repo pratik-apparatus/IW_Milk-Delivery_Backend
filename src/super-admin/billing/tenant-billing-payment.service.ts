@@ -39,7 +39,9 @@ export class TenantBillingPaymentService {
     @InjectRepository(TenantSubscription)
     private readonly subscriptionRepo: Repository<TenantSubscription>,
   ) {
-    this.keyId = (this.configService.get<string>('RAZORPAY_KEY_ID') || '').trim();
+    this.keyId = (
+      this.configService.get<string>('RAZORPAY_KEY_ID') || ''
+    ).trim();
     this.keySecret = (
       this.configService.get<string>('RAZORPAY_KEY_SECRET') || ''
     ).trim();
@@ -66,7 +68,10 @@ export class TenantBillingPaymentService {
   }
 
   /** Create a Razorpay order when tenant admin initiates payment. */
-  async createOrderForTenant(tenantId: string, requireSuperAdminTenant = false) {
+  async createOrderForTenant(
+    tenantId: string,
+    requireSuperAdminTenant = false,
+  ) {
     const subscription = await this.getSubscriptionOrThrow(
       tenantId,
       requireSuperAdminTenant,
@@ -74,7 +79,9 @@ export class TenantBillingPaymentService {
     await this.syncExpiredStatus(subscription);
 
     if (subscription.status === TenantSubscriptionStatus.CANCELLED) {
-      throw new BadRequestException('Subscription is cancelled. Assign a plan first.');
+      throw new BadRequestException(
+        'Subscription is cancelled. Assign a plan first.',
+      );
     }
 
     if (subscription.status === TenantSubscriptionStatus.ACTIVE) {
@@ -138,7 +145,9 @@ export class TenantBillingPaymentService {
     );
 
     if (subscription.razorpayOrderId !== razorpayOrderId) {
-      throw new BadRequestException('Order does not match current subscription');
+      throw new BadRequestException(
+        'Order does not match current subscription',
+      );
     }
 
     const isValid = this.verifySignature(

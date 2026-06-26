@@ -20,13 +20,11 @@ import { AdminProtected } from '../../auth/admin-protected.decorator';
 export class AdminDeliveryPartnerController {
   constructor(
     private readonly adminDeliveryPartnerService: AdminDeliveryPartnerService,
-  ) { }
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new Delivery Partner (Admin)' })
-  async createDeliveryPartner(
-    @Body() dto: CreateDeliveryPartnerDto,
-  ) {
+  async createDeliveryPartner(@Body() dto: CreateDeliveryPartnerDto) {
     return this.adminDeliveryPartnerService.createDeliveryPartner(dto);
   }
 
@@ -50,10 +48,7 @@ export class AdminDeliveryPartnerController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Update Delivery Partner' })
-  update(
-    @Param('id') id: string,
-    @Body() dto: CreateDeliveryPartnerDto,
-  ) {
+  update(@Param('id') id: string, @Body() dto: CreateDeliveryPartnerDto) {
     return this.adminDeliveryPartnerService.update(id, dto);
   }
 
@@ -64,7 +59,9 @@ export class AdminDeliveryPartnerController {
   }
 
   @Put(':id/restore')
-  @ApiOperation({ summary: 'Restore banned Delivery Partner and all related data' })
+  @ApiOperation({
+    summary: 'Restore banned Delivery Partner and all related data',
+  })
   restore(@Param('id') id: string) {
     return this.adminDeliveryPartnerService.restoreDeliveryPartner(id);
   }

@@ -15,7 +15,8 @@ export class InternalServiceGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
 
     const authHeader = request.headers['authorization'];
-    const token = typeof authHeader === 'string' ? authHeader.replace('Bearer ', '') : null;
+    const token =
+      typeof authHeader === 'string' ? authHeader.replace('Bearer ', '') : null;
     const expected = this.configService.get<string>('INTERNAL_SERVICE_TOKEN');
 
     if (!token || !expected || token !== expected) {
@@ -24,7 +25,8 @@ export class InternalServiceGuard implements CanActivate {
 
     const path = request.path || '';
     const tenantIdHeader = request.headers['x-tenant-id'];
-    const tenantId = typeof tenantIdHeader === 'string' ? tenantIdHeader.trim() : '';
+    const tenantId =
+      typeof tenantIdHeader === 'string' ? tenantIdHeader.trim() : '';
 
     // Keep internal admin creation global for platform superadmin bootstrap.
     const allowMissingTenant = path.startsWith('/internal/admin/create');
@@ -35,4 +37,3 @@ export class InternalServiceGuard implements CanActivate {
     return true;
   }
 }
-

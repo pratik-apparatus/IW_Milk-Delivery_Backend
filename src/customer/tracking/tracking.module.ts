@@ -5,9 +5,9 @@ import { TrackingController } from './tracking.controller';
 import { LocationService } from '../../delivery-partner/location.service';
 
 @Module({
-    imports: [HttpModule],
-    controllers: [TrackingController],
-    providers: [TrackingService, LocationService],
-    exports: [LocationService],
+  imports: [HttpModule],
+  controllers: [TrackingController],
+  providers: [TrackingService, LocationService],
+  exports: [LocationService],
 })
-export class TrackingModule { }
+export class TrackingModule {}

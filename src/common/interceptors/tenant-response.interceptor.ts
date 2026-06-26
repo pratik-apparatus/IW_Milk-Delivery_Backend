@@ -22,8 +22,8 @@ export class TenantResponseInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    return next.handle().pipe(
-      map((data) => enrichWithTenantId(data, tenantId)),
-    );
+    return next
+      .handle()
+      .pipe(map((data) => enrichWithTenantId(data, tenantId)));
   }
 }

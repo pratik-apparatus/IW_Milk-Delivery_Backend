@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsEmail, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
 import { Role } from '../entities/user.entity';
 
 export class ValidateEmailDto {
@@ -10,4 +16,3 @@ export class ValidateEmailDto {
   @IsOptional()
   role?: Role;
 }
-

@@ -23,11 +23,11 @@ import { AdminProtected } from '../../auth/admin-protected.decorator';
 
 // Configure multer for product image uploads
 const productStorage = diskStorage({
-    destination: './uploads/products',
-    filename: (req, file, callback) => {
-        const uniqueName = `${uuidv4()}${extname(file.originalname)}`;
-        callback(null, uniqueName);
-    },
+  destination: './uploads/products',
+  filename: (req, file, callback) => {
+    const uniqueName = `${uuidv4()}${extname(file.originalname)}`;
+    callback(null, uniqueName);
+  },
 });
 
 // Allowed file extensions
@@ -38,7 +38,7 @@ const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 @AdminProtected()
 @Controller('admin/products')
 export class ProductController {
-  constructor(private readonly productService: ProductService) { }
+  constructor(private readonly productService: ProductService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create product' })
@@ -58,36 +58,46 @@ export class ProductController {
             type: 'string',
             format: 'binary',
           },
-          description: 'Product images. First image is the hero image (appears first)',
+          description:
+            'Product images. First image is the hero image (appears first)',
         },
       },
     },
   })
-  @UseInterceptors(FilesInterceptor('images', 10, {
-    storage: productStorage,
-    fileFilter: (req, file, callback) => {
-      // Validate file extension
-      const fileExt = extname(file.originalname).toLowerCase();
-      if (!allowedExtensions.includes(fileExt)) {
-        return callback(new Error('Only JPG, PNG, and WEBP image files are allowed!'), false);
-      }
-      // Validate MIME type
-      if (!allowedMimes.includes(file.mimetype)) {
-        return callback(new Error('Only JPG, PNG, and WEBP image files are allowed!'), false);
-      }
-      callback(null, true);
-    },
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit per file
-  }))
+  @UseInterceptors(
+    FilesInterceptor('images', 10, {
+      storage: productStorage,
+      fileFilter: (req, file, callback) => {
+        // Validate file extension
+        const fileExt = extname(file.originalname).toLowerCase();
+        if (!allowedExtensions.includes(fileExt)) {
+          return callback(
+            new Error('Only JPG, PNG, and WEBP image files are allowed!'),
+            false,
+          );
+        }
+        // Validate MIME type
+        if (!allowedMimes.includes(file.mimetype)) {
+          return callback(
+            new Error('Only JPG, PNG, and WEBP image files are allowed!'),
+            false,
+          );
+        }
+        callback(null, true);
+      },
+      limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit per file
+    }),
+  )
   create(
     @Body(ParseMultipartPipe) dto: CreateProductDto,
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
     // First uploaded image is the hero image (appears first in array)
     // Order is preserved: first file = hero image, subsequent files follow in order
-    const imagePaths = files && files.length > 0
-      ? files.map(file => `/uploads/products/${file.filename}`)
-      : [];
+    const imagePaths =
+      files && files.length > 0
+        ? files.map((file) => `/uploads/products/${file.filename}`)
+        : [];
     return this.productService.create({ ...dto, images: imagePaths });
   }
 
@@ -121,27 +131,36 @@ export class ProductController {
             type: 'string',
             format: 'binary',
           },
-          description: 'Product images. First image is the hero image (appears first)',
+          description:
+            'Product images. First image is the hero image (appears first)',
         },
       },
     },
   })
-  @UseInterceptors(FilesInterceptor('images', 10, {
-    storage: productStorage,
-    fileFilter: (req, file, callback) => {
-      // Validate file extension
-      const fileExt = extname(file.originalname).toLowerCase();
-      if (!allowedExtensions.includes(fileExt)) {
-        return callback(new Error('Only JPG, PNG, and WEBP image files are allowed!'), false);
-      }
-      // Validate MIME type
-      if (!allowedMimes.includes(file.mimetype)) {
-        return callback(new Error('Only JPG, PNG, and WEBP image files are allowed!'), false);
-      }
-      callback(null, true);
-    },
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit per file
-  }))
+  @UseInterceptors(
+    FilesInterceptor('images', 10, {
+      storage: productStorage,
+      fileFilter: (req, file, callback) => {
+        // Validate file extension
+        const fileExt = extname(file.originalname).toLowerCase();
+        if (!allowedExtensions.includes(fileExt)) {
+          return callback(
+            new Error('Only JPG, PNG, and WEBP image files are allowed!'),
+            false,
+          );
+        }
+        // Validate MIME type
+        if (!allowedMimes.includes(file.mimetype)) {
+          return callback(
+            new Error('Only JPG, PNG, and WEBP image files are allowed!'),
+            false,
+          );
+        }
+        callback(null, true);
+      },
+      limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit per file
+    }),
+  )
   async update(
     @Param('id') id: string,
     @Body(ParseMultipartPipe) dto: CreateProductDto,
@@ -151,7 +170,9 @@ export class ProductController {
     // First uploaded image is the hero image (appears first in array)
     // Order is preserved: first file = hero image, subsequent files follow in order
     if (files && files.length > 0) {
-      const imagePaths = files.map(file => `/uploads/products/${file.filename}`);
+      const imagePaths = files.map(
+        (file) => `/uploads/products/${file.filename}`,
+      );
       return this.productService.update(id, { ...dto, images: imagePaths });
     }
     // If no new images, update without changing images field

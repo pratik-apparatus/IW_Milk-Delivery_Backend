@@ -31,7 +31,10 @@ export class UpdateTenantPlanDto {
   @Min(0)
   amount?: number;
 
-  @ApiPropertyOptional({ example: 30, description: 'Subscription validity in days after payment' })
+  @ApiPropertyOptional({
+    example: 30,
+    description: 'Subscription validity in days after payment',
+  })
   @IsOptional()
   @IsInt()
   @Min(1)

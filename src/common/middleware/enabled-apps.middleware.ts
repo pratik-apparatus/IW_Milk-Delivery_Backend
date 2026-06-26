@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NestMiddleware,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
 import { Tenant } from '../../entities/tenant.entity';
 

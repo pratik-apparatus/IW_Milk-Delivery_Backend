@@ -5,12 +5,12 @@ import { BannerService } from '../../admin/banner/banner.service';
 @ApiTags('Customer | Banners')
 @Controller('customer/banners')
 export class CustomerBannerController {
-    constructor(private readonly bannerService: BannerService) { }
+  constructor(private readonly bannerService: BannerService) {}
 
-    @Get()
-    @ApiOperation({ summary: 'Get all active banners for the customer app' })
-    @ApiResponse({ status: 200, description: 'List of active banners' })
-    getActiveBanners() {
-        return this.bannerService.getActiveBanners();
-    }
+  @Get()
+  @ApiOperation({ summary: 'Get all active banners for the customer app' })
+  @ApiResponse({ status: 200, description: 'List of active banners' })
+  getActiveBanners() {
+    return this.bannerService.getActiveBanners();
+  }
 }

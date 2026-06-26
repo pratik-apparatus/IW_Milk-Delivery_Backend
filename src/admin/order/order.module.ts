@@ -1,9 +1,9 @@
-import { Module } from "@nestjs/common";
-import { AdminOrderController } from "./order.controller";
-import { AdminOrderService } from "./order.service";
+import { Module } from '@nestjs/common';
+import { AdminOrderController } from './order.controller';
+import { AdminOrderService } from './order.service';
 
 @Module({
-    controllers: [AdminOrderController],
-    providers: [AdminOrderService]
+  controllers: [AdminOrderController],
+  providers: [AdminOrderService],
 })
-export class AdminOrderModule { }
+export class AdminOrderModule {}

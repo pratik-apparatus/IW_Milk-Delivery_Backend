@@ -4,8 +4,8 @@ import { DashboardController } from './dashboard.controller';
 import { WalletModule } from '../wallet/wallet.module';
 
 @Module({
-    imports: [WalletModule],
-    controllers: [DashboardController],
-    providers: [DashboardService],
+  imports: [WalletModule],
+  controllers: [DashboardController],
+  providers: [DashboardService],
 })
-export class DashboardModule { }
+export class DashboardModule {}

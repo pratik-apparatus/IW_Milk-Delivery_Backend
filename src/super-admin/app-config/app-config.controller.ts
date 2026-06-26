@@ -28,7 +28,10 @@ import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { RolesGuard } from '../../auth/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
 import { AppConfigService } from '../../admin/app-config/app-config.service';
-import { CreateAppConfigDto, UpdateAppConfigDto } from '../../admin/app-config/dto/app-config.dto';
+import {
+  CreateAppConfigDto,
+  UpdateAppConfigDto,
+} from '../../admin/app-config/dto/app-config.dto';
 
 const logoStorage = diskStorage({
   destination: './uploads/app-config',
@@ -60,7 +63,9 @@ function parseStyleVariables(raw: unknown) {
       throw new BadRequestException('styleVariables must be valid JSON');
     }
   }
-  throw new BadRequestException('styleVariables must be a JSON object or string');
+  throw new BadRequestException(
+    'styleVariables must be a JSON object or string',
+  );
 }
 
 function normalizeAppConfigBody(body: Record<string, unknown>) {
@@ -102,13 +107,18 @@ export class SuperAdminAppConfigController {
   @Get()
   @ApiOperation({ summary: 'Get app config for a tenant (super admin only)' })
   @ApiParam({ name: 'tenantId', description: 'Tenant UUID' })
-  @ApiResponse({ status: 200, description: 'App config retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'App config retrieved successfully',
+  })
   getAppConfig(@Param('tenantId') tenantId: string) {
     return this.appConfigService.getByTenantId(tenantId);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create app config for a tenant (super admin only)' })
+  @ApiOperation({
+    summary: 'Create app config for a tenant (super admin only)',
+  })
   @ApiParam({ name: 'tenantId', description: 'Tenant UUID' })
   @ApiConsumes('multipart/form-data')
   @ApiBody(APP_CONFIG_SWAGGER_BODY)
@@ -144,7 +154,9 @@ export class SuperAdminAppConfigController {
   }
 
   @Put()
-  @ApiOperation({ summary: 'Update app config for a tenant (super admin only)' })
+  @ApiOperation({
+    summary: 'Update app config for a tenant (super admin only)',
+  })
   @ApiParam({ name: 'tenantId', description: 'Tenant UUID' })
   @ApiConsumes('multipart/form-data')
   @ApiBody(APP_CONFIG_SWAGGER_BODY)
@@ -180,7 +192,9 @@ export class SuperAdminAppConfigController {
   }
 
   @Delete()
-  @ApiOperation({ summary: 'Delete app config for a tenant (super admin only)' })
+  @ApiOperation({
+    summary: 'Delete app config for a tenant (super admin only)',
+  })
   @ApiParam({ name: 'tenantId', description: 'Tenant UUID' })
   deleteAppConfig(@Param('tenantId') tenantId: string) {
     return this.appConfigService.remove(tenantId);

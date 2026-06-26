@@ -25,7 +25,9 @@ export class TenantMatchGuard implements CanActivate {
     }
 
     if (user.tenantId !== requestTenantId) {
-      throw new ForbiddenException('Token tenant does not match request tenant');
+      throw new ForbiddenException(
+        'Token tenant does not match request tenant',
+      );
     }
 
     return true;

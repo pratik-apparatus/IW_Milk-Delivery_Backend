@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsUUID, IsString, IsNumber, IsOptional, Min,Max, IsArray, MinLength, MaxLength } from 'class-validator';
+import {
+  IsUUID,
+  IsString,
+  IsNumber,
+  IsOptional,
+  Min,
+  Max,
+  IsArray,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
 export class CreateProductDto {
@@ -7,20 +17,19 @@ export class CreateProductDto {
   @IsUUID()
   categoryId: string;
 
-  @ApiProperty({example:"usha milk" })
+  @ApiProperty({ example: 'usha milk' })
   @MinLength(3)
   @MaxLength(60)
-  @IsString() 
+  @IsString()
   name: string;
 
-@ApiPropertyOptional({example: ["milk1.png", "milk2.png"]})
-@IsOptional()
-@IsArray()
-@IsString({ each: true })
-images?: string[];
+  @ApiPropertyOptional({ example: ['milk1.png', 'milk2.png'] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
 
-
-  @ApiProperty({example:100})
+  @ApiProperty({ example: 100 })
   @Transform(({ value }) => {
     if (typeof value === 'string' && value !== '') {
       return parseFloat(value);
@@ -33,16 +42,13 @@ images?: string[];
   @Max(9999)
   price: number;
 
-
-  @ApiProperty({example:"full fat milk"})
+  @ApiProperty({ example: 'full fat milk' })
   @IsString()
   @MinLength(30)
   @MaxLength(60)
   description: string;
 
-  
-
-  @ApiProperty({example:10})
+  @ApiProperty({ example: 10 })
   @Transform(({ value }) => {
     if (typeof value === 'string' && value !== '') {
       return parseInt(value, 10);

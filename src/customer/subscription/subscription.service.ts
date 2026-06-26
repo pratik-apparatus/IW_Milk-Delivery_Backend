@@ -1,10 +1,14 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException
+  BadRequestException,
 } from '@nestjs/common';
 import { TenantRepositoryService } from '../../common/database/tenant-repository.service';
-import { Subscription, PlanType, SubscriptionStatus } from '../../entities/subscription.entity';
+import {
+  Subscription,
+  PlanType,
+  SubscriptionStatus,
+} from '../../entities/subscription.entity';
 import { Customer } from '../../entities/customer.entity';
 import { Product } from '../../entities/product.entity';
 import { WalletService } from '../wallet/wallet.service';
@@ -15,7 +19,10 @@ import { applySearch } from '../../common/utils/search.util';
 import { NoRecordsFoundException } from '../../common/exceptions/no-records-found.exception';
 import { SubscriptionDeliveryLog } from '../../entities/subscription-delivery-log.entity';
 import { TenantContextService } from '../../common/services/tenant-context.service';
-import { applyTenantFilter, tenantWhere } from '../../common/utils/tenant-scope.util';
+import {
+  applyTenantFilter,
+  tenantWhere,
+} from '../../common/utils/tenant-scope.util';
 
 @Injectable()
 export class SubscriptionService {
@@ -23,12 +30,15 @@ export class SubscriptionService {
     private readonly tenantRepos: TenantRepositoryService,
     private readonly walletService: WalletService,
     private readonly tenantContext: TenantContextService,
-  ) { }
+  ) {}
 
   /**
-   * Create subscription with backend-calculated values  
+   * Create subscription with backend-calculated values
    */
-  async createSubscription(customerId: string, dto: CreateSubscriptionDto): Promise<Subscription> {
+  async createSubscription(
+    customerId: string,
+    dto: CreateSubscriptionDto,
+  ): Promise<Subscription> {
     const tenantId = this.tenantContext.requireTenantId();
     const dedicated = this.tenantContext.usesDedicatedDatabase();
     const customerRepo = await this.tenantRepos.getRepository(Customer);
@@ -58,14 +68,18 @@ export class SubscriptionService {
     // Parse dates from DD/MM/YYYY format
     const startDate = this.parseDate(dto.startDate);
     if (!startDate) {
-      throw new BadRequestException('Invalid startDate format. Expected DD/MM/YYYY');
+      throw new BadRequestException(
+        'Invalid startDate format. Expected DD/MM/YYYY',
+      );
     }
 
     let endDate: Date | null = null;
     if (dto.endDate) {
       endDate = this.parseDate(dto.endDate);
       if (!endDate) {
-        throw new BadRequestException('Invalid endDate format. Expected DD/MM/YYYY');
+        throw new BadRequestException(
+          'Invalid endDate format. Expected DD/MM/YYYY',
+        );
       }
     }
 
@@ -91,7 +105,9 @@ export class SubscriptionService {
       const endDateOnly = new Date(endDate);
       endDateOnly.setHours(0, 0, 0, 0);
       if (endDateOnly < startDateOnly) {
-        throw new BadRequestException('End date must be greater than or equal to start date');
+        throw new BadRequestException(
+          'End date must be greater than or equal to start date',
+        );
       }
     }
 
@@ -112,7 +128,7 @@ export class SubscriptionService {
       endDate,
       dto.selectedDays,
       dto.skipPattern,
-      dto.nthDay
+      dto.nthDay,
     );
 
     const totalDeliveries = deliveryDates.length;
@@ -122,7 +138,7 @@ export class SubscriptionService {
     const availableStock = product.remainingQuantity ?? product.quantity;
     if (availableStock < totalQuantityNeeded) {
       throw new BadRequestException(
-        `Insufficient stock to fulfill this subscription. Required: ${totalQuantityNeeded}, Available: ${availableStock}`
+        `Insufficient stock to fulfill this subscription. Required: ${totalQuantityNeeded}, Available: ${availableStock}`,
       );
     }
 
@@ -130,9 +146,14 @@ export class SubscriptionService {
     const nextDeliveryDate = this.getNextDeliveryDate(deliveryDates, today);
 
     // Check wallet balance
-    const hasBalance = await this.walletService.hasSufficientBalance(customerId, totalAmount);
+    const hasBalance = await this.walletService.hasSufficientBalance(
+      customerId,
+      totalAmount,
+    );
     if (!hasBalance) {
-      throw new BadRequestException(`Insufficient wallet balance. Required: ${totalAmount}`);
+      throw new BadRequestException(
+        `Insufficient wallet balance. Required: ${totalAmount}`,
+      );
     }
 
     // Create address and phone snapshots
@@ -180,10 +201,8 @@ export class SubscriptionService {
     }
 
     // Calculate remaining deliveries
-    subscriptionWithProduct.remainingDeliveries = this.calculateRemainingDeliveries(
-      subscriptionWithProduct,
-      today
-    );
+    subscriptionWithProduct.remainingDeliveries =
+      this.calculateRemainingDeliveries(subscriptionWithProduct, today);
 
     return subscriptionWithProduct;
   }
@@ -197,7 +216,7 @@ export class SubscriptionService {
     endDate: Date | null,
     selectedDays: string[] | undefined,
     skipPattern: string | undefined,
-    nthDay: number | undefined
+    nthDay: number | undefined,
   ): Date[] {
     const dates: Date[] = [];
     const start = new Date(startDate);
@@ -212,8 +231,20 @@ export class SubscriptionService {
 
     // Day name mapping
     const dayMap: { [key: string]: number } = {
-      'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6,
-      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6
+      Sun: 0,
+      Mon: 1,
+      Tue: 2,
+      Wed: 3,
+      Thu: 4,
+      Fri: 5,
+      Sat: 6,
+      Sunday: 0,
+      Monday: 1,
+      Tuesday: 2,
+      Wednesday: 3,
+      Thursday: 4,
+      Friday: 5,
+      Saturday: 6,
     };
 
     switch (planType) {
@@ -229,7 +260,9 @@ export class SubscriptionService {
         if (!selectedDays || selectedDays.length === 0) {
           break;
         }
-        const selectedDayNumbers = selectedDays.map(day => dayMap[day]).filter(num => num !== undefined);
+        const selectedDayNumbers = selectedDays
+          .map((day) => dayMap[day])
+          .filter((num) => num !== undefined);
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
           if (selectedDayNumbers.includes(d.getDay())) {
             dates.push(new Date(d));
@@ -256,14 +289,22 @@ export class SubscriptionService {
       }
     }
 
-    return deliveryDates.length > 0 ? deliveryDates[deliveryDates.length - 1] : null;
+    return deliveryDates.length > 0
+      ? deliveryDates[deliveryDates.length - 1]
+      : null;
   }
 
   /**
    * Calculate remaining deliveries for a subscription
    */
-  public calculateRemainingDeliveries(subscription: Subscription, today: Date): number {
-    if (subscription.status === SubscriptionStatus.CANCELLED || subscription.status === SubscriptionStatus.DELIVERED) {
+  public calculateRemainingDeliveries(
+    subscription: Subscription,
+    today: Date,
+  ): number {
+    if (
+      subscription.status === SubscriptionStatus.CANCELLED ||
+      subscription.status === SubscriptionStatus.DELIVERED
+    ) {
       return 0;
     }
 
@@ -278,7 +319,7 @@ export class SubscriptionService {
       subscription.endDate || null,
       subscription.selectedDays || undefined,
       subscription.skipPattern || undefined,
-      subscription.nthDay || undefined
+      subscription.nthDay || undefined,
     );
 
     const todayOnly = new Date(today);
@@ -308,7 +349,11 @@ export class SubscriptionService {
       // Month is 0-indexed in JavaScript Date
       const date = new Date(year, month - 1, day);
       // Validate the date is correct (handles invalid dates like 32/13/2026)
-      if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
+      if (
+        date.getDate() !== day ||
+        date.getMonth() !== month - 1 ||
+        date.getFullYear() !== year
+      ) {
         return null;
       }
       return date;
@@ -320,11 +365,13 @@ export class SubscriptionService {
   /**
    * Calculate next delivery date from start date
    */
-  private calculateNextDeliveryDateFromStartDate(planType: PlanType, startDate: Date): Date {
+  private calculateNextDeliveryDateFromStartDate(
+    planType: PlanType,
+    startDate: Date,
+  ): Date {
     const nextDate = new Date(startDate);
 
     switch (planType) {
-
       case PlanType.WEEKLY:
         nextDate.setDate(startDate.getDate() + 7);
         break;
@@ -349,7 +396,8 @@ export class SubscriptionService {
     const subscriptionRepo = await this.tenantRepos.getRepository(Subscription);
     const { search, page, limit } = query;
 
-    const qb = subscriptionRepo.createQueryBuilder('subscription')
+    const qb = subscriptionRepo
+      .createQueryBuilder('subscription')
       .leftJoinAndSelect('subscription.product', 'product')
       .where('subscription.customerId = :customerId', { customerId });
     applyTenantFilter(qb, tenantId, 'subscription', dedicated);
@@ -358,7 +406,7 @@ export class SubscriptionService {
       applySearch(qb, search, [
         'product.name',
         'subscription.planType',
-        'subscription.status'
+        'subscription.status',
       ]);
     }
 
@@ -381,13 +429,16 @@ export class SubscriptionService {
     return result;
   }
 
-
   // delete history of subscriptions
   async deleteSubscriptionLogs(id: string) {
     const tenantId = this.tenantContext.requireTenantId();
     const dedicated = this.tenantContext.usesDedicatedDatabase();
-    const deliveryLogRepo = await this.tenantRepos.getRepository(SubscriptionDeliveryLog);
-    const Logs = await deliveryLogRepo.find({ where: tenantWhere(tenantId, { id }, dedicated) });
+    const deliveryLogRepo = await this.tenantRepos.getRepository(
+      SubscriptionDeliveryLog,
+    );
+    const Logs = await deliveryLogRepo.find({
+      where: tenantWhere(tenantId, { id }, dedicated),
+    });
 
     if (!Logs || Logs.length === 0) {
       throw new NotFoundException('No delivered subscription logs found');
@@ -397,19 +448,26 @@ export class SubscriptionService {
 
     return {
       message: 'Delivered subscription logs deleted successfully',
-      count: Logs.length
+      count: Logs.length,
     };
   }
 
   /**
    * Get subscription by ID
    */
-  async getSubscriptionById(customerId: string, subscriptionId: string): Promise<Subscription> {
+  async getSubscriptionById(
+    customerId: string,
+    subscriptionId: string,
+  ): Promise<Subscription> {
     const tenantId = this.tenantContext.requireTenantId();
     const dedicated = this.tenantContext.usesDedicatedDatabase();
     const subscriptionRepo = await this.tenantRepos.getRepository(Subscription);
     const subscription = await subscriptionRepo.findOne({
-      where: tenantWhere(tenantId, { id: subscriptionId, customerId }, dedicated),
+      where: tenantWhere(
+        tenantId,
+        { id: subscriptionId, customerId },
+        dedicated,
+      ),
       relations: ['product'],
     });
 
@@ -420,7 +478,10 @@ export class SubscriptionService {
     // Calculate remainingDeliveries
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    subscription.remainingDeliveries = this.calculateRemainingDeliveries(subscription, today);
+    subscription.remainingDeliveries = this.calculateRemainingDeliveries(
+      subscription,
+      today,
+    );
 
     return subscription;
   }
@@ -434,10 +495,14 @@ export class SubscriptionService {
     const dedicated = this.tenantContext.usesDedicatedDatabase();
     const subscriptionRepo = await this.tenantRepos.getRepository(Subscription);
     const subscriptions = await subscriptionRepo.find({
-      where: tenantWhere(tenantId, {
-        customerId,
-        status: SubscriptionStatus.ACTIVE,
-      }, dedicated),
+      where: tenantWhere(
+        tenantId,
+        {
+          customerId,
+          status: SubscriptionStatus.ACTIVE,
+        },
+        dedicated,
+      ),
       relations: ['product'],
       order: { createdAt: 'DESC' },
     });
@@ -445,7 +510,7 @@ export class SubscriptionService {
     // Calculate remainingDeliveries for each subscription
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return subscriptions.map(sub => {
+    return subscriptions.map((sub) => {
       sub.remainingDeliveries = this.calculateRemainingDeliveries(sub, today);
       return sub;
     });
@@ -454,12 +519,19 @@ export class SubscriptionService {
   /**
    * Pause subscription (idempotent - safe to call multiple times)
    */
-  async pauseSubscription(customerId: string, subscriptionId: string): Promise<Subscription> {
+  async pauseSubscription(
+    customerId: string,
+    subscriptionId: string,
+  ): Promise<Subscription> {
     const tenantId = this.tenantContext.requireTenantId();
     const dedicated = this.tenantContext.usesDedicatedDatabase();
     const subscriptionRepo = await this.tenantRepos.getRepository(Subscription);
     const subscription = await subscriptionRepo.findOne({
-      where: tenantWhere(tenantId, { id: subscriptionId, customerId }, dedicated),
+      where: tenantWhere(
+        tenantId,
+        { id: subscriptionId, customerId },
+        dedicated,
+      ),
       relations: ['product'],
     });
 
@@ -477,7 +549,10 @@ export class SubscriptionService {
     }
 
     subscription.status = SubscriptionStatus.PAUSED;
-    subscription.remainingDeliveries = this.calculateRemainingDeliveries(subscription, new Date());
+    subscription.remainingDeliveries = this.calculateRemainingDeliveries(
+      subscription,
+      new Date(),
+    );
     await subscriptionRepo.save(subscription);
 
     const updatedSubscription = await subscriptionRepo.findOne({
@@ -491,21 +566,30 @@ export class SubscriptionService {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    updatedSubscription.remainingDeliveries = this.calculateRemainingDeliveries(updatedSubscription, today);
+    updatedSubscription.remainingDeliveries = this.calculateRemainingDeliveries(
+      updatedSubscription,
+      today,
+    );
 
     return updatedSubscription;
   }
 
-
   /**
    * Resume subscription (idempotent - safe to call multiple times)
    */
-  async resumeSubscription(customerId: string, subscriptionId: string): Promise<Subscription> {
+  async resumeSubscription(
+    customerId: string,
+    subscriptionId: string,
+  ): Promise<Subscription> {
     const tenantId = this.tenantContext.requireTenantId();
     const dedicated = this.tenantContext.usesDedicatedDatabase();
     const subscriptionRepo = await this.tenantRepos.getRepository(Subscription);
     const subscription = await subscriptionRepo.findOne({
-      where: tenantWhere(tenantId, { id: subscriptionId, customerId }, dedicated),
+      where: tenantWhere(
+        tenantId,
+        { id: subscriptionId, customerId },
+        dedicated,
+      ),
       relations: ['product'],
     });
 
@@ -536,11 +620,17 @@ export class SubscriptionService {
       subscription.endDate || null,
       subscription.selectedDays || undefined,
       subscription.skipPattern || undefined,
-      subscription.nthDay ?? undefined
+      subscription.nthDay ?? undefined,
     );
 
-    subscription.nextDeliveryDate = this.getNextDeliveryDate(deliveryDates, now);
-    subscription.remainingDeliveries = this.calculateRemainingDeliveries(subscription, now);
+    subscription.nextDeliveryDate = this.getNextDeliveryDate(
+      deliveryDates,
+      now,
+    );
+    subscription.remainingDeliveries = this.calculateRemainingDeliveries(
+      subscription,
+      now,
+    );
     await subscriptionRepo.save(subscription);
 
     const updatedSubscription = await subscriptionRepo.findOne({
@@ -552,7 +642,10 @@ export class SubscriptionService {
       throw new NotFoundException('Subscription not found after update');
     }
 
-    updatedSubscription.remainingDeliveries = this.calculateRemainingDeliveries(updatedSubscription, now);
+    updatedSubscription.remainingDeliveries = this.calculateRemainingDeliveries(
+      updatedSubscription,
+      now,
+    );
 
     return updatedSubscription;
   }
@@ -560,12 +653,19 @@ export class SubscriptionService {
   /**
    * Cancel subscription
    */
-  async cancelSubscription(customerId: string, subscriptionId: string): Promise<void> {
+  async cancelSubscription(
+    customerId: string,
+    subscriptionId: string,
+  ): Promise<void> {
     const tenantId = this.tenantContext.requireTenantId();
     const dedicated = this.tenantContext.usesDedicatedDatabase();
     const subscriptionRepo = await this.tenantRepos.getRepository(Subscription);
     const subscription = await subscriptionRepo.findOne({
-      where: tenantWhere(tenantId, { id: subscriptionId, customerId }, dedicated),
+      where: tenantWhere(
+        tenantId,
+        { id: subscriptionId, customerId },
+        dedicated,
+      ),
     });
 
     if (!subscription) {
@@ -577,14 +677,19 @@ export class SubscriptionService {
     await subscriptionRepo.save(subscription);
   }
 
-
-
-  async addMissedDelivery(customerId: string, subscriptionId: string): Promise<Subscription> {
+  async addMissedDelivery(
+    customerId: string,
+    subscriptionId: string,
+  ): Promise<Subscription> {
     const tenantId = this.tenantContext.requireTenantId();
     const dedicated = this.tenantContext.usesDedicatedDatabase();
     const subscriptionRepo = await this.tenantRepos.getRepository(Subscription);
     const subscription = await subscriptionRepo.findOne({
-      where: tenantWhere(tenantId, { id: subscriptionId, customerId }, dedicated),
+      where: tenantWhere(
+        tenantId,
+        { id: subscriptionId, customerId },
+        dedicated,
+      ),
       relations: ['product'],
     });
 
@@ -593,7 +698,9 @@ export class SubscriptionService {
     }
 
     if (subscription.status !== SubscriptionStatus.ACTIVE) {
-      throw new BadRequestException('Only active subscriptions can have missed deliveries added');
+      throw new BadRequestException(
+        'Only active subscriptions can have missed deliveries added',
+      );
     }
 
     if (!subscription.startDate) {
@@ -611,17 +718,22 @@ export class SubscriptionService {
       subscription.endDate,
       subscription.selectedDays || undefined,
       subscription.skipPattern || undefined,
-      subscription.nthDay ?? undefined
+      subscription.nthDay ?? undefined,
     );
 
     const nextDeliveryDate = this.getNextDeliveryDate(deliveryDates, now);
     if (!nextDeliveryDate) {
-      throw new BadRequestException('No upcoming delivery dates found for this subscription');
+      throw new BadRequestException(
+        'No upcoming delivery dates found for this subscription',
+      );
     }
 
     // Use the calculated next delivery date (based on the subscription pattern)
     subscription.nextDeliveryDate = nextDeliveryDate;
-    subscription.remainingDeliveries = this.calculateRemainingDeliveries(subscription, now);
+    subscription.remainingDeliveries = this.calculateRemainingDeliveries(
+      subscription,
+      now,
+    );
 
     await subscriptionRepo.save(subscription);
 
@@ -634,7 +746,10 @@ export class SubscriptionService {
       throw new NotFoundException('Subscription not found after update');
     }
 
-    updatedSubscription.remainingDeliveries = this.calculateRemainingDeliveries(updatedSubscription, now);
+    updatedSubscription.remainingDeliveries = this.calculateRemainingDeliveries(
+      updatedSubscription,
+      now,
+    );
 
     return updatedSubscription;
   }
@@ -647,14 +762,12 @@ export class SubscriptionService {
     const nextDate = new Date(now);
 
     switch (planType) {
-
       case PlanType.WEEKLY:
         nextDate.setDate(now.getDate() + 7);
         break;
       case PlanType.MONTHLY:
         nextDate.setMonth(now.getMonth() + 1);
         break;
-
     }
 
     return nextDate;
@@ -667,12 +780,17 @@ export class SubscriptionService {
   /**
    * Calculate next delivery date by scanning the calendar starting from the day AFTER baseDate
    */
-  calculateNextDeliveryDateFromBase(subscription: Subscription, baseDate: Date): Date | null {
+  calculateNextDeliveryDateFromBase(
+    subscription: Subscription,
+    baseDate: Date,
+  ): Date | null {
     const nextStart = new Date(baseDate);
     nextStart.setDate(nextStart.getDate() + 1);
     nextStart.setHours(0, 0, 0, 0);
 
-    const endDate = subscription.endDate ? new Date(subscription.endDate) : null;
+    const endDate = subscription.endDate
+      ? new Date(subscription.endDate)
+      : null;
     if (endDate) {
       endDate.setHours(23, 59, 59, 999);
       if (nextStart > endDate) return null;
@@ -685,7 +803,7 @@ export class SubscriptionService {
       subscription.endDate,
       subscription.selectedDays || undefined,
       subscription.skipPattern || undefined,
-      subscription.nthDay || undefined
+      subscription.nthDay || undefined,
     );
 
     return futureDates.length > 0 ? futureDates[0] : null;
