@@ -143,7 +143,7 @@ async function printTenantDiscoveryDiagnostics(
       `TENANT_DB_HOST override: ${process.env.TENANT_DB_HOST} (all tenant connections use this host)`,
     );
     console.warn(
-      'WARNING: TENANT_DB_HOST is set — tenant migrations will NOT use each tenant\'s dbHost from the platform DB.',
+      "WARNING: TENANT_DB_HOST is set — tenant migrations will NOT use each tenant's dbHost from the platform DB.",
     );
     console.warn(
       '  For online/production tenant DBs, unset TENANT_DB_HOST and run: npm run migration:tenant:run -- --all',
