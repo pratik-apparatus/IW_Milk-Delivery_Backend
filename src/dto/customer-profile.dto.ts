@@ -16,8 +16,7 @@ const toOptionalNumber = ({ value }: { value: unknown }) => {
   if (value === '' || value === null || value === undefined) {
     return undefined;
   }
-  const parsed =
-    typeof value === 'string' ? parseFloat(value) : Number(value);
+  const parsed = typeof value === 'string' ? parseFloat(value) : Number(value);
   return Number.isNaN(parsed) ? value : parsed;
 };
 
