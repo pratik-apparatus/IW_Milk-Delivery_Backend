@@ -17,6 +17,18 @@ export class ParseMultipartPipe implements PipeTransform {
             ? parseInt(value.quantity, 10)
             : value.quantity;
       }
+      if (value.latitude !== undefined) {
+        value.latitude =
+          typeof value.latitude === 'string' && value.latitude !== ''
+            ? parseFloat(value.latitude)
+            : value.latitude;
+      }
+      if (value.longitude !== undefined) {
+        value.longitude =
+          typeof value.longitude === 'string' && value.longitude !== ''
+            ? parseFloat(value.longitude)
+            : value.longitude;
+      }
     }
     return value;
   }

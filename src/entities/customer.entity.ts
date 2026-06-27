@@ -49,6 +49,9 @@ export class Customer {
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
   longitude: number;
 
+  @Column({ type: 'varchar', length: 512, nullable: true })
+  profilePic: string | null;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   fcmToken: string;
 
