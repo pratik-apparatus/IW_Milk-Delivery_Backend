@@ -1,7 +1,6 @@
 import {
   IsEmail,
   IsNotEmpty,
-  IsPhoneNumber,
   IsString,
   MaxLength,
   MinLength,
@@ -10,7 +9,17 @@ import {
   Min,
   Max,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+
+const toOptionalNumber = ({ value }: { value: unknown }) => {
+  if (value === '' || value === null || value === undefined) {
+    return undefined;
+  }
+  const parsed =
+    typeof value === 'string' ? parseFloat(value) : Number(value);
+  return Number.isNaN(parsed) ? value : parsed;
+};
 
 export class CreateCustomerProfileDto {
   @ApiProperty({ example: 'John Doe', description: 'Customer name' })
@@ -53,6 +62,7 @@ export class CreateCustomerProfileDto {
     description: 'Latitude coordinate',
     required: false,
   })
+  @Transform(toOptionalNumber)
   @IsNumber()
   @IsOptional()
   @Min(-90)
@@ -64,6 +74,7 @@ export class CreateCustomerProfileDto {
     description: 'Longitude coordinate',
     required: false,
   })
+  @Transform(toOptionalNumber)
   @IsNumber()
   @IsOptional()
   @Min(-180)
@@ -133,6 +144,7 @@ export class UpdateCustomerProfileDto {
     description: 'Latitude coordinate',
     required: false,
   })
+  @Transform(toOptionalNumber)
   @IsNumber()
   @IsOptional()
   @Min(-90)
@@ -144,6 +156,7 @@ export class UpdateCustomerProfileDto {
     description: 'Longitude coordinate',
     required: false,
   })
+  @Transform(toOptionalNumber)
   @IsNumber()
   @IsOptional()
   @Min(-180)

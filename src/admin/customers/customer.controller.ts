@@ -3,21 +3,21 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Customer } from 'src/entities/customer.entity';
 import { customerService } from './customer.service';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
-import { AdminProtected } from '../../auth/admin-protected.decorator';
+import { AdminBillingProtected } from '../../auth/admin-protected.decorator';
 
 @ApiTags('Admin | Customers')
-@AdminProtected()
+@AdminBillingProtected()
 @Controller('admin/customers')
 export class CustomerController {
   constructor(private readonly customerService: customerService) {}
 
   @Get()
   @ApiOperation({
-    summary: 'get all customers with subscription details (excludes banned)',
+    summary: 'get all customers (excludes banned)',
   })
   @ApiResponse({
     status: 200,
-    description: 'all customers with their subscriptions and product details',
+    description: 'paginated list of customers',
     type: [Customer],
   })
   getAllCustomers(@Query() query: PaginationQueryDto) {
@@ -26,12 +26,11 @@ export class CustomerController {
 
   @Get('all')
   @ApiOperation({
-    summary:
-      'get all customers with subscription details (alternative route, excludes banned)',
+    summary: 'get all customers (alternative route, excludes banned)',
   })
   @ApiResponse({
     status: 200,
-    description: 'all customers with their subscriptions and product details',
+    description: 'paginated list of customers',
     type: [Customer],
   })
   getallc(@Query() query: PaginationQueryDto) {
