@@ -9,23 +9,25 @@ console.log('Key ID:', key_id);
 console.log('Key Secret: ' + key_secret.substring(0, 4) + '...');
 
 try {
-    const razorpay = new Razorpay({
-        key_id: key_id,
-        key_secret: key_secret,
-    });
+  const razorpay = new Razorpay({
+    key_id: key_id,
+    key_secret: key_secret,
+  });
 
-    razorpay.orders.create({
-        amount: 50000, // 500 INR
-        currency: 'INR',
-        receipt: 'test_receipt_' + Date.now(),
-    }).then((order) => {
-        console.log('SUCCESS: Order created successfully!');
-        console.log('Order ID:', order.id);
-    }).catch((error) => {
-        console.error('FAILURE: Could not create order.');
-        console.error('Error:', error);
+  razorpay.orders
+    .create({
+      amount: 50000, // 500 INR
+      currency: 'INR',
+      receipt: 'test_receipt_' + Date.now(),
+    })
+    .then((order) => {
+      console.log('SUCCESS: Order created successfully!');
+      console.log('Order ID:', order.id);
+    })
+    .catch((error) => {
+      console.error('FAILURE: Could not create order.');
+      console.error('Error:', error);
     });
-
 } catch (e) {
-    console.error('Initialization Error:', e);
+  console.error('Initialization Error:', e);
 }

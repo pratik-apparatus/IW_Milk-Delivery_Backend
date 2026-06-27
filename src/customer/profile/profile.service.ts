@@ -24,7 +24,10 @@ export class CustomerProfileService {
     private readonly tenantContext: TenantContextService,
   ) {}
 
-  async createProfile(dto: CreateCustomerProfileDto): Promise<Customer> {
+  async createProfile(
+    dto: CreateCustomerProfileDto,
+    profilePic?: string | null,
+  ): Promise<Customer> {
     const tenantId = this.tenantContext.requireTenantId();
     const dedicated = this.tenantContext.usesDedicatedDatabase();
     const customerRepo = await this.tenantRepos.getRepository(Customer);
@@ -54,6 +57,9 @@ export class CustomerProfileService {
       customer.landmark = dto.landmark;
       customer.area = dto.area;
       customer.address = fullAddress;
+      if (profilePic) {
+        customer.profilePic = profilePic;
+      }
     } else {
       customer = customerRepo.create({
         name: dto.name,
@@ -63,8 +69,16 @@ export class CustomerProfileService {
         landmark: dto.landmark,
         area: dto.area,
         address: fullAddress,
+        profilePic: profilePic ?? null,
         tenantId: dedicated ? null : tenantId,
       });
+    }
+
+    if (dto.latitude !== undefined) {
+      customer.latitude = dto.latitude;
+    }
+    if (dto.longitude !== undefined) {
+      customer.longitude = dto.longitude;
     }
 
     return customerRepo.save(customer);
@@ -96,6 +110,7 @@ export class CustomerProfileService {
   async updateProfile(
     id: string,
     dto: UpdateCustomerProfileDto,
+    profilePic?: string | null,
   ): Promise<Customer> {
     const tenantId = this.tenantContext.requireTenantId();
     const dedicated = this.tenantContext.usesDedicatedDatabase();
@@ -126,6 +141,9 @@ export class CustomerProfileService {
 
     if (dto.latitude !== undefined) customer.latitude = dto.latitude;
     if (dto.longitude !== undefined) customer.longitude = dto.longitude;
+    if (profilePic) {
+      customer.profilePic = profilePic;
+    }
 
     customer.address = `${customer.houseNo}, ${customer.landmark}, ${customer.area}`;
 

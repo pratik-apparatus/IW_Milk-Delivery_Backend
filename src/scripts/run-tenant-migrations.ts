@@ -56,7 +56,7 @@ async function ensureTenantSchemaBootstrapped(
 
 async function migrateTenantRecord(tenant: Tenant, bootstrapEmpty: boolean) {
   const connection = resolveTenantDbConnection(tenant);
-  const label = `${tenant.businessName} (${connection.database} @ ${connection.host})`;
+  const label = `${tenant.businessName} (${connection.database} @ ${connection.host}:${connection.port})`;
   console.log(`\nTenant: ${label}`);
 
   const dataSource = createTenantDataSource(tenant, {
@@ -141,6 +141,12 @@ async function printTenantDiscoveryDiagnostics(
   if (process.env.TENANT_DB_HOST) {
     console.log(
       `TENANT_DB_HOST override: ${process.env.TENANT_DB_HOST} (all tenant connections use this host)`,
+    );
+    console.warn(
+      "WARNING: TENANT_DB_HOST is set — tenant migrations will NOT use each tenant's dbHost from the platform DB.",
+    );
+    console.warn(
+      '  For online/production tenant DBs, unset TENANT_DB_HOST and run: npm run migration:tenant:run -- --all',
     );
   } else {
     console.log(
