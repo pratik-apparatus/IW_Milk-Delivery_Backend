@@ -29,8 +29,6 @@ export class customerService {
 
     const qb = customerRepo
       .createQueryBuilder('customer')
-      .leftJoinAndSelect('customer.subscriptions', 'subscriptions')
-      .leftJoinAndSelect('subscriptions.product', 'product')
       .where('customer.isBanned = :isBanned', { isBanned: false });
     applyTenantFilter(qb, tenantId, 'customer', dedicated);
 
@@ -40,7 +38,6 @@ export class customerService {
         'customer.phone',
         'customer.email',
         'customer.address',
-        'subscriptions.planType',
       ]);
     }
 
