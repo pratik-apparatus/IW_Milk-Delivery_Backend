@@ -81,9 +81,10 @@ export class TenantsService {
       dbPort:
         payload.dbPort || Number(this.configService.get('DB_PORT') || 5432),
       dbName: payload.dbName || this.buildDefaultDbName(payload.subdomain),
-      dbUser: payload.dbUser || this.configService.get('DB_USER') || null,
+      dbUser:
+        this.resolveDbCredential(payload.dbUser, 'DB_USER') || null,
       dbPassword:
-        payload.dbPassword || this.configService.get('DB_PASSWORD') || null,
+        this.resolveDbCredential(payload.dbPassword, 'DB_PASSWORD') || null,
     });
     const created = await this.tenantRepo.save(tenant);
     this.emitTenantEvent(TenantLifecycleEventType.TENANT_CREATED, created.id, {
@@ -413,6 +414,17 @@ export class TenantsService {
   private buildDefaultDbName(subdomain: string) {
     const safe = subdomain.replace(/[^a-z0-9_]/gi, '_').toLowerCase();
     return `milk_${safe}`;
+  }
+
+  private resolveDbCredential(
+    value: string | undefined,
+    envKey: 'DB_USER' | 'DB_PASSWORD',
+  ): string | undefined {
+    const trimmed = value?.trim();
+    if (trimmed) {
+      return trimmed;
+    }
+    return this.configService.get<string>(envKey) || undefined;
   }
 
   private async createTenantDatabaseIfMissing(tenant: Tenant) {
