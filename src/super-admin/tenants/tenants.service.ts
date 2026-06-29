@@ -81,8 +81,7 @@ export class TenantsService {
       dbPort:
         payload.dbPort || Number(this.configService.get('DB_PORT') || 5432),
       dbName: payload.dbName || this.buildDefaultDbName(payload.subdomain),
-      dbUser:
-        this.resolveDbCredential(payload.dbUser, 'DB_USER') || null,
+      dbUser: this.resolveDbCredential(payload.dbUser, 'DB_USER') || null,
       dbPassword:
         this.resolveDbCredential(payload.dbPassword, 'DB_PASSWORD') || null,
     });
