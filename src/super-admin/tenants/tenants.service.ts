@@ -10,7 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from 'pg';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { Repository } from 'typeorm';
+import { Repository, QueryFailedError } from 'typeorm';
 import { MailClientService } from '../../microservices/mail-client.service';
 import { applyPagination } from '../../common/utils/pagination.util';
 import { Tenant, TenantStatus } from '../../entities/tenant.entity';
@@ -33,6 +33,18 @@ import {
   normalizeIntegrationConfig,
   parseEnabledApps,
 } from './tenant-config.util';
+
+type ProvisionRollbackState = {
+  adminUserId?: string;
+  adminUserCreated?: boolean;
+  previousAdminTenantId?: string | null;
+};
+
+type AdminUserProvisionResult = {
+  user: User;
+  created: boolean;
+  previousTenantId: string | null;
+};
 
 @Injectable()
 export class TenantsService {
@@ -61,6 +73,8 @@ export class TenantsService {
       throw new ConflictException('Subdomain already exists');
     }
 
+    await this.assertAdminIdentityAvailable(payload);
+
     const tenant = this.tenantRepo.create({
       businessName: payload.businessName,
       subdomain: payload.subdomain,
@@ -86,19 +100,29 @@ export class TenantsService {
         this.resolveDbCredential(payload.dbPassword, 'DB_PASSWORD') || null,
     });
     const created = await this.tenantRepo.save(tenant);
-    this.emitTenantEvent(TenantLifecycleEventType.TENANT_CREATED, created.id, {
-      subdomain: created.subdomain,
-    });
+    const rollbackState: ProvisionRollbackState = {};
 
-    const provisioningJob = await this.provisionTenant(created.id);
-    const provisionedTenant = await this.tenantRepo.findOne({
-      where: { id: created.id },
-    });
+    try {
+      const provisioningJob = await this.provisionTenant(
+        created.id,
+        rollbackState,
+      );
+      const provisionedTenant = await this.tenantRepo.findOne({
+        where: { id: created.id },
+      });
 
-    return {
-      tenant: this.sanitizeTenant(provisionedTenant!),
-      provisioningJob,
-    };
+      this.emitTenantEvent(TenantLifecycleEventType.TENANT_CREATED, created.id, {
+        subdomain: created.subdomain,
+      });
+
+      return {
+        tenant: this.sanitizeTenant(provisionedTenant!),
+        provisioningJob,
+      };
+    } catch (error) {
+      await this.rollbackFailedTenantCreation(created, rollbackState);
+      throw this.mapProvisioningError(error);
+    }
   }
 
   async findAll(query: TenantQueryDto) {
@@ -290,7 +314,10 @@ export class TenantsService {
     };
   }
 
-  async provisionTenant(id: string) {
+  async provisionTenant(
+    id: string,
+    rollbackState?: ProvisionRollbackState,
+  ) {
     const tenant = await this.tenantRepo.findOne({ where: { id } });
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
@@ -327,7 +354,15 @@ export class TenantsService {
 
       const temporaryPassword = this.generateTemporaryPassword();
       job.steps = [...job.steps, 'CREATE_ADMIN_USER'];
-      await this.createTenantAdminUser(tenant, temporaryPassword);
+      const adminProvision = await this.createTenantAdminUser(
+        tenant,
+        temporaryPassword,
+      );
+      if (rollbackState) {
+        rollbackState.adminUserId = adminProvision.user.id;
+        rollbackState.adminUserCreated = adminProvision.created;
+        rollbackState.previousAdminTenantId = adminProvision.previousTenantId;
+      }
 
       job.steps = [...job.steps, 'SEND_CREDENTIALS_EMAIL'];
       await this.sendTenantCredentialsEmail(tenant, temporaryPassword);
@@ -350,7 +385,7 @@ export class TenantsService {
       job.status = ProvisioningJobStatus.FAILED;
       job.lastError = error?.message || 'Provisioning failed';
       await this.provisioningRepo.save(job);
-      throw error;
+      throw this.mapProvisioningError(error);
     }
   }
 
@@ -458,19 +493,34 @@ export class TenantsService {
     return randomBytes(9).toString('base64url');
   }
 
-  private async createTenantAdminUser(tenant: Tenant, plainPassword: string) {
+  private async createTenantAdminUser(
+    tenant: Tenant,
+    plainPassword: string,
+  ): Promise<AdminUserProvisionResult> {
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
     const existing = await this.userRepo.findOne({
-      where: { email: tenant.adminEmail, role: Role.ADMIN },
+      where: { email: tenant.adminEmail },
     });
 
     if (existing) {
+      if (existing.role !== Role.ADMIN) {
+        throw new ConflictException(
+          'Admin email is already registered for another account type',
+        );
+      }
+
+      const previousTenantId = existing.tenantId;
       existing.tenantId = tenant.id;
       existing.password = hashedPassword;
       existing.isActive = true;
       existing.username = existing.username || `${tenant.subdomain}_admin`;
       if (tenant.supportPhone) {
-        existing.phone = tenant.supportPhone;
+        const phoneTaken = await this.userRepo.findOne({
+          where: { phone: tenant.supportPhone },
+        });
+        if (!phoneTaken || phoneTaken.id === existing.id) {
+          existing.phone = tenant.supportPhone;
+        }
       }
 
       const savedUser = await this.userRepo.save(existing);
@@ -482,13 +532,17 @@ export class TenantsService {
           this.adminRepo.create({ userId: savedUser.id }),
         );
       }
-      return savedUser;
+      return {
+        user: savedUser,
+        created: false,
+        previousTenantId,
+      };
     }
 
     const user = this.userRepo.create({
       email: tenant.adminEmail,
       username: `${tenant.subdomain}_admin`,
-      phone: tenant.supportPhone || `tenant-${tenant.id.slice(0, 8)}`,
+      phone: await this.resolveAdminUserPhone(tenant),
       password: hashedPassword,
       role: Role.ADMIN,
       tenantId: tenant.id,
@@ -496,7 +550,127 @@ export class TenantsService {
     });
     const savedUser = await this.userRepo.save(user);
     await this.adminRepo.save(this.adminRepo.create({ userId: savedUser.id }));
-    return savedUser;
+    return {
+      user: savedUser,
+      created: true,
+      previousTenantId: null,
+    };
+  }
+
+  private async assertAdminIdentityAvailable(payload: CreateTenantDto) {
+    const emailOwner = await this.userRepo.findOne({
+      where: { email: payload.adminEmail },
+    });
+    if (emailOwner && emailOwner.role !== Role.ADMIN) {
+      throw new ConflictException(
+        'Admin email is already registered for another account type',
+      );
+    }
+
+    const supportPhone = payload.supportPhone?.trim();
+    if (!supportPhone) {
+      return;
+    }
+
+    const phoneOwner = await this.userRepo.findOne({
+      where: { phone: supportPhone },
+    });
+    if (
+      phoneOwner &&
+      (!emailOwner || phoneOwner.id !== emailOwner.id)
+    ) {
+      throw new ConflictException(
+        'Support phone is already registered to another user',
+      );
+    }
+  }
+
+  private async resolveAdminUserPhone(tenant: Tenant): Promise<string> {
+    const candidates = [
+      tenant.supportPhone?.trim(),
+      `tenant-${tenant.id}`,
+      `tenant-${tenant.subdomain}-${tenant.id.slice(0, 8)}`,
+    ].filter((value): value is string => Boolean(value));
+
+    for (const phone of candidates) {
+      const taken = await this.userRepo.findOne({ where: { phone } });
+      if (!taken) {
+        return phone;
+      }
+    }
+
+    return `tenant-${tenant.id}`;
+  }
+
+  private async rollbackFailedTenantCreation(
+    tenant: Tenant,
+    state: ProvisionRollbackState,
+  ): Promise<void> {
+    try {
+      if (state.adminUserId) {
+        if (state.adminUserCreated) {
+          await this.adminRepo.delete({ userId: state.adminUserId });
+          await this.userRepo.delete({ id: state.adminUserId });
+        } else {
+          await this.userRepo.update(state.adminUserId, {
+            tenantId: state.previousAdminTenantId ?? null,
+          });
+        }
+      }
+
+      await this.provisioningRepo.delete({ tenantId: tenant.id });
+      await this.tenantRepo.delete({ id: tenant.id });
+
+      this.logger.warn(
+        `Rolled back failed tenant creation for subdomain "${tenant.subdomain}" (${tenant.id}). The tenant database "${tenant.dbName}" may still exist on the server and can be reused.`,
+      );
+    } catch (rollbackError: any) {
+      this.logger.error(
+        `Failed to roll back tenant ${tenant.id}: ${rollbackError?.message || rollbackError}`,
+      );
+    }
+  }
+
+  private mapProvisioningError(error: unknown): Error {
+    if (error instanceof ConflictException || error instanceof BadRequestException) {
+      return error;
+    }
+
+    if (error instanceof QueryFailedError) {
+      const driverError = error.driverError as { code?: string; constraint?: string };
+      if (driverError?.code === '23505') {
+        const message = this.describeUniqueConstraintViolation(
+          driverError.constraint,
+          error.message,
+        );
+        return new ConflictException(message);
+      }
+    }
+
+    if (error instanceof Error) {
+      return error;
+    }
+
+    return new Error('Provisioning failed');
+  }
+
+  private describeUniqueConstraintViolation(
+    constraint: string | undefined,
+    rawMessage: string,
+  ): string {
+    const normalized = `${constraint || ''} ${rawMessage}`.toLowerCase();
+
+    if (normalized.includes('email')) {
+      return 'Admin email is already registered';
+    }
+    if (normalized.includes('phone')) {
+      return 'Support phone is already registered to another user';
+    }
+    if (normalized.includes('subdomain')) {
+      return 'Subdomain already exists';
+    }
+
+    return 'A unique value in this request is already in use';
   }
 
   private async sendTenantCredentialsEmail(
