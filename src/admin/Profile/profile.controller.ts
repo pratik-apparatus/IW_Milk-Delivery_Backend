@@ -1,9 +1,11 @@
-import { Controller, Get, Put, Body } from '@nestjs/common';
+import { Controller, Get, Put, Body, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { AdminProfileService } from './profile.services';
 import { UpdateAdminProfileDto } from '../../dto/admin-profile.dto';
 import { CurrentUser } from '../../auth/current-user.decorator';
 import { AdminProtected } from '../../auth/admin-protected.decorator';
+import { Tenant } from '../../entities/tenant.entity';
 
 @ApiTags('Admin | Profile')
 @AdminProtected()
@@ -16,8 +18,11 @@ export class AdminProfileController {
   @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Admin profile not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getProfile(@CurrentUser() user: any) {
-    return this.profileService.getProfile(user.id);
+  async getProfile(
+    @CurrentUser() user: any,
+    @Req() req: Request & { tenant?: Tenant },
+  ) {
+    return this.profileService.getProfile(user.id, req.tenant);
   }
 
   @Put()
