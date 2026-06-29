@@ -7,9 +7,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Admin } from '../../entities/admin.entity';
 import { User } from '../../entities/user.entity';
+import { Tenant } from '../../entities/tenant.entity';
 import { UpdateAdminProfileDto } from '../../dto/admin-profile.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../../entities/user.entity';
+
+function sanitizeTenantForAdmin(tenant: Tenant) {
+  const { dbPassword, dbUser, dbHost, dbPort, dbName, ...safeTenant } = tenant;
+  return safeTenant;
+}
 
 @Injectable()
 export class AdminProfileService {
@@ -23,7 +29,7 @@ export class AdminProfileService {
   /**
    * Get admin profile by user ID
    */
-  async getProfile(userId: string) {
+  async getProfile(userId: string, tenant?: Tenant) {
     // Find admin by userId and role
     const admin = await this.adminRepo.findOne({
       where: { userId },
@@ -34,8 +40,7 @@ export class AdminProfileService {
       throw new NotFoundException('Admin profile not found');
     }
 
-    // Return profile data without password
-    const { password, ...userWithoutPassword } = admin.user;
+    const safeTenant = tenant ? sanitizeTenantForAdmin(tenant) : null;
 
     return {
       id: admin.id,
@@ -49,6 +54,10 @@ export class AdminProfileService {
       latitude: admin.user.latitude ? Number(admin.user.latitude) : null,
       longitude: admin.user.longitude ? Number(admin.user.longitude) : null,
       createdAt: admin.user.createdAt,
+      tenantId: admin.user.tenantId || safeTenant?.id || null,
+      enabledApps: safeTenant?.enabledApps,
+      appSettings: safeTenant?.appSettings,
+      tenant: safeTenant,
     };
   }
 
