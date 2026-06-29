@@ -30,10 +30,11 @@ export function resolveTenantDbConnection(
   return {
     host: env.TENANT_DB_HOST || tenant.dbHost || env.DB_HOST || 'localhost',
     port: Number(env.TENANT_DB_PORT || tenant.dbPort || env.DB_PORT || 5432),
-    username: env.TENANT_DB_USER || tenant.dbUser || env.DB_USER || 'postgres',
+    username:
+      env.TENANT_DB_USER || tenant.dbUser?.trim() || env.DB_USER || 'postgres',
     password:
       env.TENANT_DB_PASSWORD ||
-      tenant.dbPassword ||
+      tenant.dbPassword?.trim() ||
       env.DB_PASSWORD ||
       'postgres',
     database: tenant.dbName!,

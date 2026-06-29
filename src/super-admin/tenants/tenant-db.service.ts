@@ -201,11 +201,11 @@ export class TenantDbService {
         tenant.dbPort ||
         Number(this.configService.get<string>('DB_PORT') || 5432),
       user:
-        tenant.dbUser ||
+        tenant.dbUser?.trim() ||
         this.configService.get<string>('DB_USER') ||
         'postgres',
       password:
-        tenant.dbPassword ||
+        tenant.dbPassword?.trim() ||
         this.configService.get<string>('DB_PASSWORD') ||
         undefined,
       database: tenant.dbName,
