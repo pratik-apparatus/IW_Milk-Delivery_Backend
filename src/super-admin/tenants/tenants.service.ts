@@ -111,9 +111,13 @@ export class TenantsService {
         where: { id: created.id },
       });
 
-      this.emitTenantEvent(TenantLifecycleEventType.TENANT_CREATED, created.id, {
-        subdomain: created.subdomain,
-      });
+      this.emitTenantEvent(
+        TenantLifecycleEventType.TENANT_CREATED,
+        created.id,
+        {
+          subdomain: created.subdomain,
+        },
+      );
 
       return {
         tenant: this.sanitizeTenant(provisionedTenant!),
@@ -314,10 +318,7 @@ export class TenantsService {
     };
   }
 
-  async provisionTenant(
-    id: string,
-    rollbackState?: ProvisionRollbackState,
-  ) {
+  async provisionTenant(id: string, rollbackState?: ProvisionRollbackState) {
     const tenant = await this.tenantRepo.findOne({ where: { id } });
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
@@ -575,10 +576,7 @@ export class TenantsService {
     const phoneOwner = await this.userRepo.findOne({
       where: { phone: supportPhone },
     });
-    if (
-      phoneOwner &&
-      (!emailOwner || phoneOwner.id !== emailOwner.id)
-    ) {
+    if (phoneOwner && (!emailOwner || phoneOwner.id !== emailOwner.id)) {
       throw new ConflictException(
         'Support phone is already registered to another user',
       );
@@ -632,12 +630,18 @@ export class TenantsService {
   }
 
   private mapProvisioningError(error: unknown): Error {
-    if (error instanceof ConflictException || error instanceof BadRequestException) {
+    if (
+      error instanceof ConflictException ||
+      error instanceof BadRequestException
+    ) {
       return error;
     }
 
     if (error instanceof QueryFailedError) {
-      const driverError = error.driverError as { code?: string; constraint?: string };
+      const driverError = error.driverError as {
+        code?: string;
+        constraint?: string;
+      };
       if (driverError?.code === '23505') {
         const message = this.describeUniqueConstraintViolation(
           driverError.constraint,
