@@ -194,10 +194,21 @@ export class TenantsService {
         string,
         unknown
       >;
+      const incomingRazorpay = {
+        ...(integrationConfig.razorpay || {}),
+      } as Record<string, unknown>;
+
+      if (
+        typeof incomingRazorpay.keySecret === 'string' &&
+        !incomingRazorpay.keySecret.trim()
+      ) {
+        delete incomingRazorpay.keySecret;
+      }
+
       tenant.integrationConfig = normalizeIntegrationConfig({
         razorpay: {
           ...existingRazorpay,
-          ...integrationConfig.razorpay,
+          ...incomingRazorpay,
         },
       });
     }
@@ -368,6 +379,8 @@ export class TenantsService {
       job.steps = [...job.steps, 'SEND_CREDENTIALS_EMAIL'];
       await this.sendTenantCredentialsEmail(tenant, temporaryPassword);
 
+      tenant.deletedAt = null;
+      tenant.suspensionReason = null;
       tenant.status = TenantStatus.ACTIVE;
       await this.tenantRepo.save(tenant);
 

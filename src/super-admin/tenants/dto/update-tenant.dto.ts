@@ -16,7 +16,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { OPTIONAL_TENANT_APPS } from '../../../common/constants/tenant-apps.constants';
-import { TenantIntegrationConfigDto } from './tenant-integration-config.dto';
+import { TenantIntegrationConfigDto, UpdateTenantIntegrationConfigDto } from './tenant-integration-config.dto';
 
 export class UpdateTenantDto {
   @ApiPropertyOptional({ example: 'Milk Co Updated' })
@@ -112,8 +112,8 @@ export class UpdateTenantDto {
   })
   @IsOptional()
   @ValidateNested()
-  @Type(() => TenantIntegrationConfigDto)
-  integrationConfig?: TenantIntegrationConfigDto;
+  @Type(() => UpdateTenantIntegrationConfigDto)
+  integrationConfig?: UpdateTenantIntegrationConfigDto;
 
   @ApiPropertyOptional({ example: '127.0.0.1' })
   @IsOptional()
