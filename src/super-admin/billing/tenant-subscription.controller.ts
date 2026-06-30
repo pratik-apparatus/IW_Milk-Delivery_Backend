@@ -43,6 +43,24 @@ export class TenantSubscriptionController {
     return this.subscriptionService.assignPlan(tenantId, dto.planId);
   }
 
+  @Patch('plan')
+  @ApiOperation({ summary: 'Update the billing plan for this tenant' })
+  updatePlan(
+    @Param('tenantId') tenantId: string,
+    @Body() dto: AssignTenantPlanDto,
+  ) {
+    return this.subscriptionService.updatePlan(tenantId, dto.planId);
+  }
+
+  @Post('detach')
+  @ApiOperation({
+    summary:
+      'Detach billing plan from tenant (cancels active subscription if needed)',
+  })
+  detachPlan(@Param('tenantId') tenantId: string) {
+    return this.subscriptionService.detachPlan(tenantId);
+  }
+
   @Patch('cancel')
   @ApiOperation({ summary: 'Cancel tenant subscription' })
   cancel(@Param('tenantId') tenantId: string) {

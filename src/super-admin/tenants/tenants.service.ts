@@ -23,6 +23,7 @@ import { Admin } from '../../entities/admin.entity';
 import { RefreshTokenService } from '../../internal/auth/refresh-token.service';
 import { TenantDbService } from './tenant-db.service';
 import { TenantDatabaseService } from '../../common/database/tenant-database.service';
+import { TenantSubscriptionService } from '../billing/tenant-subscription.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { TenantQueryDto } from './dto/tenant-query.dto';
 import { UpdateTenantAppsDto } from './dto/update-tenant-apps.dto';
@@ -63,6 +64,7 @@ export class TenantsService {
     private readonly tenantDbService: TenantDbService,
     private readonly mailClient: MailClientService,
     private readonly tenantDatabaseService: TenantDatabaseService,
+    private readonly tenantSubscriptionService: TenantSubscriptionService,
   ) {}
 
   async create(payload: CreateTenantDto) {
@@ -263,6 +265,49 @@ export class TenantsService {
 
   async remove(id: string) {
     return this.decommissionTenant(id);
+  }
+
+  async permanentlyDeleteTenant(id: string) {
+    const tenant = await this.tenantRepo.findOne({ where: { id } });
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+
+    const tenantUsers = await this.userRepo.find({ where: { tenantId: id } });
+    for (const user of tenantUsers) {
+      await this.refreshTokenService.revokeAllForUser(user.id);
+      await this.adminRepo.delete({ userId: user.id });
+      await this.userRepo.delete({ id: user.id });
+    }
+
+    await this.tenantSubscriptionService.forceDetachForTenantDeletion(id);
+    await this.provisioningRepo.delete({ tenantId: id });
+
+    let databaseDropped = false;
+    let databaseName: string | null = tenant.dbName;
+
+    if (tenant.dbName) {
+      await this.tenantDatabaseService.closeTenantConnection(id);
+      const dropResult = await this.tenantDbService.dropTenantDatabase(tenant);
+      databaseDropped = dropResult.dropped;
+      databaseName = dropResult.database;
+    }
+
+    await this.tenantRepo.delete({ id });
+
+    this.emitTenantEvent(TenantLifecycleEventType.TENANT_DELETED, id, {
+      deletedUsers: tenantUsers.length,
+      databaseDropped,
+      databaseName,
+    });
+
+    return {
+      message: 'Tenant permanently deleted',
+      tenantId: id,
+      deletedUsers: tenantUsers.length,
+      databaseDropped,
+      databaseName,
+    };
   }
 
   async decommissionTenant(id: string) {

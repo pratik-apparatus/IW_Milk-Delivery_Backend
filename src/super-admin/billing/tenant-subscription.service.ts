@@ -168,6 +168,52 @@ export class TenantSubscriptionService {
     };
   }
 
+  async updatePlan(tenantId: string, planId: string) {
+    return this.assignPlan(tenantId, planId);
+  }
+
+  async detachPlan(tenantId: string) {
+    await findSuperAdminTenant(this.tenantRepo, tenantId);
+
+    const subscription = await this.subscriptionRepo.findOne({
+      where: { tenantId },
+    });
+
+    if (!subscription) {
+      return {
+        message: 'No billing plan attached to this tenant',
+        tenantId,
+        detached: false,
+      };
+    }
+
+    if (subscription.status === TenantSubscriptionStatus.ACTIVE) {
+      subscription.status = TenantSubscriptionStatus.CANCELLED;
+      subscription.cancelledAt = new Date();
+      await this.subscriptionRepo.save(subscription);
+    }
+
+    await this.subscriptionRepo.remove(subscription);
+
+    return {
+      message: 'Billing plan detached successfully',
+      tenantId,
+      detached: true,
+    };
+  }
+
+  async forceDetachForTenantDeletion(tenantId: string): Promise<void> {
+    const subscription = await this.subscriptionRepo.findOne({
+      where: { tenantId },
+    });
+
+    if (!subscription) {
+      return;
+    }
+
+    await this.subscriptionRepo.remove(subscription);
+  }
+
   private async buildStatusResponse(
     tenantId: string,
     subscription: TenantSubscription | null,

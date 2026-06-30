@@ -102,4 +102,15 @@ export class TenantDatabaseService implements OnModuleDestroy {
     }
     this.connections.clear();
   }
+
+  async closeTenantConnection(tenantId: string): Promise<void> {
+    const cached = this.connections.get(tenantId);
+    if (!cached?.isInitialized) {
+      return;
+    }
+
+    await cached.destroy();
+    this.connections.delete(tenantId);
+    this.logger.log(`Closed tenant DB connection: ${tenantId}`);
+  }
 }
