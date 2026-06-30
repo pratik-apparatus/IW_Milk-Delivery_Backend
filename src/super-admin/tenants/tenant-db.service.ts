@@ -179,6 +179,60 @@ export class TenantDbService {
     await this.runQuery(config, 'SELECT 1');
   }
 
+  async dropTenantDatabase(tenant: Tenant): Promise<{
+    dropped: boolean;
+    database: string | null;
+  }> {
+    if (!tenant.dbName) {
+      return { dropped: false, database: null };
+    }
+
+    const adminClient = new Client({
+      host:
+        tenant.dbHost ||
+        this.configService.get<string>('DB_HOST') ||
+        'localhost',
+      port:
+        tenant.dbPort ||
+        Number(this.configService.get<string>('DB_PORT') || 5432),
+      user:
+        tenant.dbUser?.trim() ||
+        this.configService.get<string>('DB_USER') ||
+        'postgres',
+      password:
+        tenant.dbPassword?.trim() ||
+        this.configService.get<string>('DB_PASSWORD') ||
+        undefined,
+      database: 'postgres',
+    });
+
+    await adminClient.connect();
+    try {
+      const exists = await adminClient.query(
+        'SELECT 1 FROM pg_database WHERE datname = $1',
+        [tenant.dbName],
+      );
+
+      if ((exists.rowCount ?? 0) === 0) {
+        return { dropped: false, database: tenant.dbName };
+      }
+
+      await adminClient.query(
+        `
+        SELECT pg_terminate_backend(pid)
+        FROM pg_stat_activity
+        WHERE datname = $1 AND pid <> pg_backend_pid()
+      `,
+        [tenant.dbName],
+      );
+
+      await adminClient.query(`DROP DATABASE "${tenant.dbName}"`);
+      return { dropped: true, database: tenant.dbName };
+    } finally {
+      await adminClient.end();
+    }
+  }
+
   private async getTenantOrThrow(tenantId: string): Promise<Tenant> {
     const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
     if (!tenant || tenant.deletedAt) {

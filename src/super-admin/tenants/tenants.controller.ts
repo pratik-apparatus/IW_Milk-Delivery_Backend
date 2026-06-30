@@ -90,10 +90,7 @@ export class TenantsController {
   @Get(':id/audit-logs')
   @ApiOperation({ summary: 'Get tenant admin audit logs by tenant ID' })
   @ApiResponse({ status: 200, description: 'Tenant audit logs fetched' })
-  async getAuditLogs(
-    @Param('id') id: string,
-    @Query('limit') limit?: string,
-  ) {
+  async getAuditLogs(@Param('id') id: string, @Query('limit') limit?: string) {
     const parsedLimit = Math.min(Number(limit) || 100, 500);
     const logs = await this.auditLogService.findByTenant(id, parsedLimit);
     return toAdminAuditLogListResponse(logs);
@@ -162,8 +159,21 @@ export class TenantsController {
     return this.tenantsService.getProvisioningJob(id, jobId);
   }
 
+  @Delete(':id/permanent')
+  @ApiOperation({
+    summary:
+      'Permanently delete tenant, detach billing, remove users, and drop tenant database',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Tenant permanently deleted',
+  })
+  permanentlyDelete(@Param('id') id: string) {
+    return this.tenantsService.permanentlyDeleteTenant(id);
+  }
+
   @Delete(':id')
-  @ApiOperation({ summary: 'Decommission tenant (soft delete)' })
+  @ApiOperation({ summary: 'Soft-delete (decommission) a tenant' })
   @ApiResponse({
     status: 200,
     description: 'Tenant decommissioned successfully',
