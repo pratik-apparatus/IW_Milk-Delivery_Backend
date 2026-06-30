@@ -23,6 +23,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { mkdirSync } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { RolesGuard } from '../../auth/roles.guard';
@@ -32,6 +33,8 @@ import {
   CreateAppConfigDto,
   UpdateAppConfigDto,
 } from '../../admin/app-config/dto/app-config.dto';
+
+mkdirSync('./uploads/app-config', { recursive: true });
 
 const logoStorage = diskStorage({
   destination: './uploads/app-config',

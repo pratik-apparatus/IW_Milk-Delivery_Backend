@@ -265,7 +265,7 @@ export class ReportsService {
       .addSelect('MIN(product.remainingQuantity)', 'remainingQuantity')
       .groupBy('product.id')
       .addGroupBy('product.name')
-      .orderBy('unitsSold', 'DESC');
+      .orderBy('SUM(orderItem.quantity)', 'DESC');
     applyTenantFilter(qb, tenantId, 'order', dedicated);
 
     // Add period grouping if specified
@@ -338,7 +338,7 @@ export class ReportsService {
       .groupBy('product.id')
       .addGroupBy('product.name')
       .having('SUM(orderItem.quantity) > 0')
-      .orderBy('unitsSold', 'ASC');
+      .orderBy('SUM(orderItem.quantity)', 'ASC');
     applyTenantFilter(qb, tenantId, 'order', dedicated);
 
     // Add period grouping if specified
@@ -409,7 +409,7 @@ export class ReportsService {
       .select(periodConfig.select, periodConfig.label)
       .addSelect('COUNT(subscription.id)', 'count')
       .groupBy(periodConfig.groupBy)
-      .orderBy(periodConfig.label, 'DESC');
+      .orderBy(periodConfig.groupBy, 'DESC');
     applyTenantFilter(qb, tenantId, 'subscription', dedicated);
 
     if (startDate) {
@@ -527,7 +527,7 @@ export class ReportsService {
       )
       .addSelect('COUNT(order.id)', 'totalOrders')
       .groupBy('partner.id')
-      .orderBy('deliveredOrders', 'DESC');
+      .orderBy('COUNT(CASE WHEN order.status = \'DELIVERED\' THEN 1 END)', 'DESC');
     applyTenantFilter(qb, tenantId, 'partner', dedicated);
 
     // Add period grouping if specified
