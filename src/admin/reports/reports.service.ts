@@ -527,7 +527,10 @@ export class ReportsService {
       )
       .addSelect('COUNT(order.id)', 'totalOrders')
       .groupBy('partner.id')
-      .orderBy('COUNT(CASE WHEN order.status = \'DELIVERED\' THEN 1 END)', 'DESC');
+      .orderBy(
+        "COUNT(CASE WHEN order.status = 'DELIVERED' THEN 1 END)",
+        'DESC',
+      );
     applyTenantFilter(qb, tenantId, 'partner', dedicated);
 
     // Add period grouping if specified
