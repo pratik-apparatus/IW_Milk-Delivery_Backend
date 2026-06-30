@@ -9,7 +9,13 @@ import { NextFunction, Request, Response } from 'express';
 import { Repository } from 'typeorm';
 import { Tenant, TenantStatus } from '../../entities/tenant.entity';
 
-const EXCLUDED_PREFIXES = ['/super-admin', '/internal', '/api-docs', '/health'];
+const EXCLUDED_PREFIXES = [
+  '/super-admin',
+  '/internal',
+  '/api-docs',
+  '/health',
+  '/uploads',
+];
 
 @Injectable()
 export class TenantContextMiddleware implements NestMiddleware {
