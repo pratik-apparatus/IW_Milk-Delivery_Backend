@@ -317,6 +317,11 @@ export class TenantsService {
     }
 
     const restored = await this.tenantRepo.save(tenant);
+
+    if (tenant.dbName) {
+      await this.tenantDatabaseService.initializeTenantSchema(restored);
+    }
+
     this.emitTenantEvent(TenantLifecycleEventType.TENANT_UPDATED, restored.id, {
       restored: true,
       reactivatedUsers: tenantUsers.length,

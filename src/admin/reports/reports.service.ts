@@ -141,16 +141,21 @@ export class ReportsService {
       await this.tenantRepos.getRepository(WalletTransaction);
     const { period, startDate, endDate, page, limit } = query;
 
-    const periodConfig = getPeriodSelectAndGroup(
+    const paymentPeriod = getPeriodSelectAndGroup(
       period as unknown as ReportPeriod,
+      'payment.createdAt',
+    );
+    const transactionPeriod = getPeriodSelectAndGroup(
+      period as unknown as ReportPeriod,
+      'transaction.createdAt',
     );
 
     const topUpsQuery = paymentRepo
       .createQueryBuilder('payment')
-      .select(periodConfig.select, 'period')
+      .select(paymentPeriod.select, 'period')
       .addSelect('SUM(payment.amount)', 'topUps')
       .where('payment.status = :status', { status: PaymentStatus.SUCCESS })
-      .groupBy(periodConfig.groupBy);
+      .groupBy(paymentPeriod.groupBy);
     applyTenantFilter(topUpsQuery, tenantId, 'payment', dedicated);
 
     if (startDate) {
@@ -163,11 +168,11 @@ export class ReportsService {
     // Get refunds grouped by period
     const refundsQuery = walletTransactionRepo
       .createQueryBuilder('transaction')
-      .select(periodConfig.select, 'period')
+      .select(transactionPeriod.select, 'period')
       .addSelect('SUM(transaction.amount)', 'refunds')
       .where('transaction.type = :type', { type: TransactionType.CREDIT })
       .andWhere('transaction.description LIKE :refund', { refund: '%Refund%' })
-      .groupBy(periodConfig.groupBy);
+      .groupBy(transactionPeriod.groupBy);
     applyTenantFilter(refundsQuery, tenantId, 'transaction', dedicated);
 
     if (startDate) {
@@ -253,7 +258,7 @@ export class ReportsService {
       .createQueryBuilder('orderItem')
       .innerJoin('orderItem.product', 'product')
       .innerJoin('orderItem.order', 'order')
-      .select('MIN(product.id)', 'productId')
+      .select('product.id', 'productId')
       .addSelect('product.name', 'productName')
       .addSelect('SUM(orderItem.quantity)', 'unitsSold')
       .addSelect('MIN(product.quantity)', 'totalQuantity')
@@ -325,7 +330,7 @@ export class ReportsService {
       .createQueryBuilder('orderItem')
       .innerJoin('orderItem.product', 'product')
       .innerJoin('orderItem.order', 'order')
-      .select('MIN(product.id)', 'productId')
+      .select('product.id', 'productId')
       .addSelect('product.name', 'productName')
       .addSelect('SUM(orderItem.quantity)', 'unitsSold')
       .addSelect('MIN(product.quantity)', 'totalQuantity')
