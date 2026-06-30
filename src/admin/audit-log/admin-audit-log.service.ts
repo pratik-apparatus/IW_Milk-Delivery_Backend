@@ -30,21 +30,27 @@ export class AdminAuditLogService {
   ) {}
 
   async log(input: CreateAdminAuditLogInput) {
-    const auditRepo = await this.tenantDatabase.getRepositoryForTenant(
-      input.tenantId,
-      AdminAuditLog,
-    );
-    const entry = auditRepo.create({
-      tenantId: input.tenantId,
-      adminId: input.adminId,
-      method: input.method,
-      path: input.path,
-      action: input.action || null,
-      statusCode: input.statusCode ?? null,
-      ipAddress: typeof input.ipAddress === 'string' ? input.ipAddress : null,
-      metadata: input.metadata || {},
-    });
-    await auditRepo.save(entry);
+    try {
+      const auditRepo = await this.tenantDatabase.getRepositoryForTenant(
+        input.tenantId,
+        AdminAuditLog,
+      );
+      const entry = auditRepo.create({
+        tenantId: input.tenantId,
+        adminId: input.adminId,
+        method: input.method,
+        path: input.path,
+        action: input.action || null,
+        statusCode: input.statusCode ?? null,
+        ipAddress: typeof input.ipAddress === 'string' ? input.ipAddress : null,
+        metadata: input.metadata || {},
+      });
+      await auditRepo.save(entry);
+    } catch (error: any) {
+      this.logger.warn(
+        `Failed to write admin audit log for tenant ${input.tenantId}: ${error?.message || error}`,
+      );
+    }
   }
 
   async findByTenant(tenantId: string, limit = 100) {
@@ -52,10 +58,12 @@ export class AdminAuditLogService {
       tenantId,
       AdminAuditLog,
     );
-    return auditRepo.find({
+    const logs = await auditRepo.find({
       order: { createdAt: 'DESC' },
       take: limit,
     });
+
+    return logs;
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM)

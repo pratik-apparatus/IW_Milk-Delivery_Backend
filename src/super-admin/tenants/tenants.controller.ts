@@ -25,6 +25,8 @@ import { UpdateTenantStatusDto } from './dto/update-tenant-status.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantsService } from './tenants.service';
 import { TenantDbService } from './tenant-db.service';
+import { AdminAuditLogService } from '../../admin/audit-log/admin-audit-log.service';
+import { toAdminAuditLogListResponse } from '../../admin/audit-log/admin-audit-log.mapper';
 
 @ApiTags('Super Admin | Tenants')
 @ApiBearerAuth()
@@ -35,6 +37,7 @@ export class TenantsController {
   constructor(
     private readonly tenantsService: TenantsService,
     private readonly tenantDbService: TenantDbService,
+    private readonly auditLogService: AdminAuditLogService,
   ) {}
 
   @Post()
@@ -82,6 +85,18 @@ export class TenantsController {
   @ApiResponse({ status: 200, description: 'Database health snapshot' })
   getDbHealth(@Param('id') id: string) {
     return this.tenantDbService.getDbHealth(id);
+  }
+
+  @Get(':id/audit-logs')
+  @ApiOperation({ summary: 'Get tenant admin audit logs by tenant ID' })
+  @ApiResponse({ status: 200, description: 'Tenant audit logs fetched' })
+  async getAuditLogs(
+    @Param('id') id: string,
+    @Query('limit') limit?: string,
+  ) {
+    const parsedLimit = Math.min(Number(limit) || 100, 500);
+    const logs = await this.auditLogService.findByTenant(id, parsedLimit);
+    return toAdminAuditLogListResponse(logs);
   }
 
   @Patch(':id')
