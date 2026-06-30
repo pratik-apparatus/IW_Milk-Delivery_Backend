@@ -16,7 +16,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { OPTIONAL_TENANT_APPS } from '../../../common/constants/tenant-apps.constants';
-import { TenantIntegrationConfigDto, UpdateTenantIntegrationConfigDto } from './tenant-integration-config.dto';
+import {
+  TenantIntegrationConfigDto,
+  UpdateTenantIntegrationConfigDto,
+} from './tenant-integration-config.dto';
 
 export class UpdateTenantDto {
   @ApiPropertyOptional({ example: 'Milk Co Updated' })
