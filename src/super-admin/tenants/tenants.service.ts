@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Client } from 'pg';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { Repository, QueryFailedError } from 'typeorm';
@@ -24,6 +23,7 @@ import { RefreshTokenService } from '../../internal/auth/refresh-token.service';
 import { TenantDbService } from './tenant-db.service';
 import { TenantDatabaseService } from '../../common/database/tenant-database.service';
 import { TenantSubscriptionService } from '../billing/tenant-subscription.service';
+import { ManagedDatabasesService } from '../databases/managed-databases.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { TenantQueryDto } from './dto/tenant-query.dto';
 import { UpdateTenantAppsDto } from './dto/update-tenant-apps.dto';
@@ -39,6 +39,11 @@ type ProvisionRollbackState = {
   adminUserId?: string;
   adminUserCreated?: boolean;
   previousAdminTenantId?: string | null;
+  managedDatabaseId?: string | null;
+};
+
+type ProvisionTenantOptions = {
+  forceReset?: boolean;
 };
 
 type AdminUserProvisionResult = {
@@ -65,6 +70,7 @@ export class TenantsService {
     private readonly mailClient: MailClientService,
     private readonly tenantDatabaseService: TenantDatabaseService,
     private readonly tenantSubscriptionService: TenantSubscriptionService,
+    private readonly managedDatabasesService: ManagedDatabasesService,
   ) {}
 
   async create(payload: CreateTenantDto) {
@@ -75,9 +81,10 @@ export class TenantsService {
       throw new ConflictException('Subdomain already exists');
     }
 
+    this.assertDatabaseSource(payload);
     await this.assertAdminIdentityAvailable(payload);
 
-    const tenant = this.tenantRepo.create({
+    const tenantDraft = this.tenantRepo.create({
       businessName: payload.businessName,
       subdomain: payload.subdomain,
       status: TenantStatus.INACTIVE,
@@ -93,16 +100,46 @@ export class TenantsService {
       adminEmail: payload.adminEmail,
       supportEmail: payload.supportEmail || null,
       supportPhone: payload.supportPhone || null,
-      dbHost: payload.dbHost || this.configService.get('DB_HOST') || null,
-      dbPort:
-        payload.dbPort || Number(this.configService.get('DB_PORT') || 5432),
-      dbName: payload.dbName || this.buildDefaultDbName(payload.subdomain),
-      dbUser: this.resolveDbCredential(payload.dbUser, 'DB_USER') || null,
-      dbPassword:
-        this.resolveDbCredential(payload.dbPassword, 'DB_PASSWORD') || null,
+      managedDatabaseId: null,
+      dbHost: null,
+      dbPort: null,
+      dbName: null,
+      dbUser: null,
+      dbPassword: null,
     });
-    const created = await this.tenantRepo.save(tenant);
-    const rollbackState: ProvisionRollbackState = {};
+
+    let managedDatabaseId: string | null = null;
+    if (payload.databaseId) {
+      const managedDatabase =
+        await this.managedDatabasesService.getAvailableForTenant(payload.databaseId);
+      this.managedDatabasesService.applyConnectionToTenantDraft(
+        managedDatabase,
+        tenantDraft,
+      );
+      managedDatabaseId = managedDatabase.id;
+    } else {
+      tenantDraft.dbHost = payload.dbHost || this.configService.get('DB_HOST') || null;
+      tenantDraft.dbPort =
+        payload.dbPort || Number(this.configService.get('DB_PORT') || 5432);
+      tenantDraft.dbName = payload.dbName || this.buildDefaultDbName(payload.subdomain);
+      tenantDraft.dbUser = this.resolveDbCredential(payload.dbUser, 'DB_USER') || null;
+      tenantDraft.dbPassword =
+        this.resolveDbCredential(payload.dbPassword, 'DB_PASSWORD') || null;
+    }
+
+    await this.tenantDbService.prepareDatabaseForTenant(tenantDraft);
+
+    const created = await this.tenantRepo.save(tenantDraft);
+    const rollbackState: ProvisionRollbackState = {
+      managedDatabaseId,
+    };
+
+    if (managedDatabaseId) {
+      await this.managedDatabasesService.assignToTenant(
+        managedDatabaseId,
+        created.id,
+      );
+    }
 
     try {
       const provisioningJob = await this.provisionTenant(
@@ -126,6 +163,9 @@ export class TenantsService {
         provisioningJob,
       };
     } catch (error) {
+      if (rollbackState.managedDatabaseId) {
+        await this.managedDatabasesService.releaseFromTenant(created.id);
+      }
       await this.rollbackFailedTenantCreation(created, rollbackState);
       throw this.mapProvisioningError(error);
     }
@@ -286,7 +326,10 @@ export class TenantsService {
     let databaseDropped = false;
     let databaseName: string | null = tenant.dbName;
 
-    if (tenant.dbName) {
+    if (tenant.managedDatabaseId) {
+      await this.tenantDatabaseService.closeTenantConnection(id);
+      await this.managedDatabasesService.releaseFromTenant(id);
+    } else if (tenant.dbName) {
       await this.tenantDatabaseService.closeTenantConnection(id);
       const dropResult = await this.tenantDbService.dropTenantDatabase(tenant);
       databaseDropped = dropResult.dropped;
@@ -379,10 +422,19 @@ export class TenantsService {
     };
   }
 
-  async provisionTenant(id: string, rollbackState?: ProvisionRollbackState) {
+  async provisionTenant(
+    id: string,
+    rollbackState?: ProvisionRollbackState,
+    options?: ProvisionTenantOptions,
+  ) {
     const tenant = await this.tenantRepo.findOne({ where: { id } });
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
+    }
+
+    const isInitialProvision = Boolean(rollbackState);
+    if (!isInitialProvision && tenant.dbName) {
+      await this.assertReprovisionAllowed(tenant, options?.forceReset === true);
     }
 
     const existingInFlight = await this.provisioningRepo.findOne({
@@ -407,10 +459,17 @@ export class TenantsService {
       await this.provisioningRepo.save(job);
 
       if (tenant.dbName) {
-        await this.createTenantDatabaseIfMissing(tenant);
+        if (!isInitialProvision && options?.forceReset === true) {
+          job.steps = [...job.steps, 'DROP_DATABASE'];
+          await this.tenantDbService.dropTenantDatabase(tenant);
+        }
+
+        await this.tenantDbService.createDatabaseIfMissing(tenant);
+        job.steps = [...job.steps, 'TEST_CONNECTION'];
+        await this.tenantDbService.verifyConnection(tenant);
         job.steps = [...job.steps, 'INIT_SCHEMA'];
         await this.tenantDatabaseService.initializeTenantSchema(tenant);
-        job.steps = [...job.steps, 'VERIFY_HEALTH'];
+        job.steps = [...job.steps, 'VERIFY_CONNECTION'];
         await this.tenantDbService.verifyConnection(tenant);
       }
 
@@ -487,9 +546,39 @@ export class TenantsService {
     };
   }
 
+  async getTenantDbHealth(id: string) {
+    const tenant = await this.tenantRepo.findOne({ where: { id } });
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+
+    return this.tenantDbService.getDbHealth(id);
+  }
+
   private sanitizeTenant(tenant: Tenant) {
     const { dbPassword, ...safeTenant } = tenant;
     return safeTenant;
+  }
+
+  private async assertReprovisionAllowed(
+    tenant: Tenant,
+    forceReset: boolean,
+  ): Promise<void> {
+    if (forceReset) {
+      return;
+    }
+
+    const health = await this.tenantDbService.getDbHealth(tenant.id);
+    const publicTableCount = health.metrics?.publicTableCount ?? 0;
+    const databaseExists = health.metrics?.databaseExists === true;
+    const isHealthyInUse =
+      health.status === 'healthy' && databaseExists && publicTableCount > 0;
+
+    if (isHealthyInUse) {
+      throw new BadRequestException(
+        'Tenant database is already provisioned and healthy. Re-provisioning is only allowed when the database is missing, unhealthy, or when you explicitly choose to reset it from scratch.',
+      );
+    }
   }
 
   private emitTenantEvent(
@@ -523,34 +612,6 @@ export class TenantsService {
       return trimmed;
     }
     return this.configService.get<string>(envKey) || undefined;
-  }
-
-  private async createTenantDatabaseIfMissing(tenant: Tenant) {
-    if (!tenant.dbName) {
-      return;
-    }
-
-    const adminClient = new Client({
-      host: this.configService.get<string>('DB_HOST'),
-      port: Number(this.configService.get<string>('DB_PORT') || 5432),
-      user: this.configService.get<string>('DB_USER'),
-      password: this.configService.get<string>('DB_PASSWORD'),
-      database: 'postgres',
-    });
-
-    await adminClient.connect();
-    try {
-      const exists = await adminClient.query(
-        'SELECT 1 FROM pg_database WHERE datname = $1',
-        [tenant.dbName],
-      );
-
-      if (exists.rowCount === 0) {
-        await adminClient.query(`CREATE DATABASE "${tenant.dbName}"`);
-      }
-    } finally {
-      await adminClient.end();
-    }
   }
 
   private generateTemporaryPassword() {
@@ -619,6 +680,23 @@ export class TenantsService {
       created: true,
       previousTenantId: null,
     };
+  }
+
+  private assertDatabaseSource(payload: CreateTenantDto) {
+    const hasDatabaseId = Boolean(payload.databaseId);
+    const hasInlineDbConfig = Boolean(
+      payload.dbHost ||
+        payload.dbPort ||
+        payload.dbName ||
+        payload.dbUser ||
+        payload.dbPassword,
+    );
+
+    if (hasDatabaseId && hasInlineDbConfig) {
+      throw new BadRequestException(
+        'Use either databaseId (pre-created pool database) or inline dbHost/dbName fields, not both',
+      );
+    }
   }
 
   private async assertAdminIdentityAvailable(payload: CreateTenantDto) {

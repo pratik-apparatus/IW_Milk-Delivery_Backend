@@ -5,12 +5,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomBytes } from 'crypto';
 import { LessThan, Repository } from 'typeorm';
 import { RefreshToken } from '../../entities/refresh-token.entity';
+import { Tenant } from '../../entities/tenant.entity';
+import { assertTenantAllowsLogin } from '../../common/utils/tenant-login.util';
 
 @Injectable()
 export class RefreshTokenService {
   constructor(
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepo: Repository<RefreshToken>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepository: Repository<Tenant>,
     private readonly configService: ConfigService,
   ) {}
 
@@ -57,6 +61,13 @@ export class RefreshTokenService {
 
     if (!stored || stored.expiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if (stored.tenantId) {
+      const tenant = await this.tenantRepository.findOne({
+        where: { id: stored.tenantId },
+      });
+      assertTenantAllowsLogin(tenant);
     }
 
     stored.revoked = true;

@@ -5,6 +5,7 @@ import { Tenant } from '../../entities/tenant.entity';
 import { TenantProvisioningJob } from '../../entities/tenant-provisioning-job.entity';
 import { TenantPlan } from '../../entities/tenant-plan.entity';
 import { TenantSubscription } from '../../entities/tenant-subscription.entity';
+import { ManagedDatabase } from '../../entities/managed-database.entity';
 
 /** Only these tables belong in the platform (control-plane) database. */
 export const PLATFORM_ENTITIES = [
@@ -12,6 +13,7 @@ export const PLATFORM_ENTITIES = [
   TenantProvisioningJob,
   TenantPlan,
   TenantSubscription,
+  ManagedDatabase,
   User,
   Admin,
   RefreshToken,

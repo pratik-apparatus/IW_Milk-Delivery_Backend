@@ -4,8 +4,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Customer } from '../../entities/customer.entity';
+import { Subscription } from '../../entities/subscription.entity';
+import { SubscriptionDeliveryLog } from '../../entities/subscription-delivery-log.entity';
+import { Order } from '../../entities/order.entity';
+import { OrderItem } from '../../entities/order-item.entity';
+import { Wallet } from '../../entities/wallet.entity';
+import { WalletTransaction } from '../../entities/wallet-transaction.entity';
+import { Cart } from '../../entities/cart.entity';
+import { Payment } from '../../entities/payment.entity';
 import {
   CreateCustomerProfileDto,
   UpdateCustomerProfileDto,
@@ -13,6 +21,7 @@ import {
 import { Role, User } from '../../entities/user.entity';
 import { TenantContextService } from '../../common/services/tenant-context.service';
 import { TenantRepositoryService } from '../../common/database/tenant-repository.service';
+import { TenantDatabaseService } from '../../common/database/tenant-database.service';
 import { tenantWhere } from '../../common/utils/tenant-scope.util';
 
 @Injectable()
@@ -22,6 +31,7 @@ export class CustomerProfileService {
     @InjectRepository(User)
     private readonly UserRepo: Repository<User>,
     private readonly tenantContext: TenantContextService,
+    private readonly tenantDatabase: TenantDatabaseService,
   ) {}
 
   async createProfile(
@@ -188,7 +198,49 @@ export class CustomerProfileService {
       throw new NotFoundException('Customer not found');
     }
 
-    await customerRepo.remove(customer);
+    const dataSource = await this.tenantDatabase.getTenantDataSource(tenantId);
+    const customerFilter = tenantWhere(tenantId, { customerId }, dedicated);
+
+    await dataSource.transaction(async (manager) => {
+      const subscriptions = await manager.find(Subscription, {
+        where: customerFilter,
+        select: ['id'],
+      });
+      const subscriptionIds = subscriptions.map((item) => item.id);
+
+      if (subscriptionIds.length > 0) {
+        await manager.delete(SubscriptionDeliveryLog, {
+          subscriptionId: In(subscriptionIds),
+        });
+      }
+
+      const orders = await manager.find(Order, {
+        where: customerFilter,
+        select: ['id'],
+      });
+      const orderIds = orders.map((item) => item.id);
+
+      if (orderIds.length > 0) {
+        await manager.delete(OrderItem, { orderId: In(orderIds) });
+        await manager.delete(Order, { id: In(orderIds) });
+      }
+
+      if (subscriptionIds.length > 0) {
+        await manager.delete(Subscription, { id: In(subscriptionIds) });
+      }
+
+      const wallet = await manager.findOne(Wallet, {
+        where: customerFilter,
+      });
+      if (wallet) {
+        await manager.delete(WalletTransaction, { walletId: wallet.id });
+        await manager.delete(Wallet, { id: wallet.id });
+      }
+
+      await manager.delete(Cart, customerFilter);
+      await manager.delete(Payment, customerFilter);
+      await manager.delete(Customer, { id: customerId });
+    });
 
     return {
       success: true,

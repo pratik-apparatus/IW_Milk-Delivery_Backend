@@ -70,6 +70,9 @@ export class Tenant {
   @Column({ type: 'varchar', nullable: true })
   dbPassword: string | null;
 
+  @Column({ type: 'uuid', nullable: true })
+  managedDatabaseId: string | null;
+
   @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
   enabledApps: string[];
 

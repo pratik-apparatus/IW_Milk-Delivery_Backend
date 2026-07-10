@@ -23,8 +23,8 @@ import { TenantQueryDto } from './dto/tenant-query.dto';
 import { UpdateTenantAppsDto } from './dto/update-tenant-apps.dto';
 import { UpdateTenantStatusDto } from './dto/update-tenant-status.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { ProvisionTenantDto } from './dto/provision-tenant.dto';
 import { TenantsService } from './tenants.service';
-import { TenantDbService } from './tenant-db.service';
 import { AdminAuditLogService } from '../../admin/audit-log/admin-audit-log.service';
 import { toAdminAuditLogListResponse } from '../../admin/audit-log/admin-audit-log.mapper';
 
@@ -36,12 +36,13 @@ import { toAdminAuditLogListResponse } from '../../admin/audit-log/admin-audit-l
 export class TenantsController {
   constructor(
     private readonly tenantsService: TenantsService,
-    private readonly tenantDbService: TenantDbService,
     private readonly auditLogService: AdminAuditLogService,
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create and provision a new tenant' })
+  @ApiOperation({
+    summary: 'Create and provision a new tenant (optionally pass databaseId from the database pool)',
+  })
   @ApiResponse({
     status: 201,
     description: 'Tenant created, provisioned, and credentials email sent',
@@ -71,20 +72,11 @@ export class TenantsController {
     return this.tenantsService.getOverview(id);
   }
 
-  @Post(':id/db/test-connection')
-  @ApiOperation({ summary: 'Test tenant database connection' })
-  @ApiResponse({ status: 200, description: 'Connection test result' })
-  testDbConnection(@Param('id') id: string) {
-    return this.tenantDbService.testConnection(id);
-  }
-
   @Get(':id/db/health')
-  @ApiOperation({
-    summary: 'Get tenant database health and monitoring metrics',
-  })
-  @ApiResponse({ status: 200, description: 'Database health snapshot' })
+  @ApiOperation({ summary: 'Get tenant database health metrics' })
+  @ApiResponse({ status: 200, description: 'Tenant database health snapshot' })
   getDbHealth(@Param('id') id: string) {
-    return this.tenantDbService.getDbHealth(id);
+    return this.tenantsService.getTenantDbHealth(id);
   }
 
   @Get(':id/audit-logs')
@@ -124,13 +116,18 @@ export class TenantsController {
   }
 
   @Post(':id/provision')
-  @ApiOperation({ summary: 'Provision tenant database and activate tenant' })
+  @ApiOperation({
+    summary:
+      'Provision tenant database and activate tenant (blocked when DB is already healthy unless forceReset is true)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Tenant provisioning started/completed',
   })
-  provision(@Param('id') id: string) {
-    return this.tenantsService.provisionTenant(id);
+  provision(@Param('id') id: string, @Body() payload?: ProvisionTenantDto) {
+    return this.tenantsService.provisionTenant(id, undefined, {
+      forceReset: payload?.forceReset === true,
+    });
   }
 
   @Post(':id/decommission')

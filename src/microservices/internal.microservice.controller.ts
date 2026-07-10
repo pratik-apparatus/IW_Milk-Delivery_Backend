@@ -40,6 +40,7 @@ export class InternalMicroserviceController {
     return this.internalAuthService.getLoginData(
       payload.data.identifier,
       payload.data.role as Role,
+      payload.tenantId || null,
     );
   }
 

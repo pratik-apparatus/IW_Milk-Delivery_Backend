@@ -11,6 +11,7 @@ import { User, Role } from '../../entities/user.entity';
 import { Tenant } from '../../entities/tenant.entity';
 import { CreateUserDto } from '../../dto/create-user.dto';
 import { TenantSubscriptionService } from '../../super-admin/billing/tenant-subscription.service';
+import { assertTenantAllowsLogin } from '../../common/utils/tenant-login.util';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -25,7 +26,11 @@ export class InternalAuthService {
     private readonly tenantSubscriptionService: TenantSubscriptionService,
   ) {}
 
-  async getLoginData(identifier: string, role: Role) {
+  async getLoginData(
+    identifier: string,
+    role: Role,
+    tenantId?: string | null,
+  ) {
     this.logger.log(
       `Getting login data for identifier: ${identifier}, role: ${role}`,
     );
@@ -63,6 +68,17 @@ export class InternalAuthService {
     if (!user.password) {
       this.logger.error(`User ${user.id} has no password set`);
       throw new UnauthorizedException('Password not set');
+    }
+
+    if (tenantId && user.tenantId && user.tenantId !== tenantId) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.tenantId) {
+      const tenantRecord = await this.tenantRepository.findOne({
+        where: { id: user.tenantId },
+      });
+      assertTenantAllowsLogin(tenantRecord);
     }
 
     this.logger.log(`Login data retrieved successfully for user: ${user.id}`);
@@ -125,6 +141,10 @@ export class InternalAuthService {
       });
 
       if (tenantRecord) {
+        if (user.role === Role.ADMIN) {
+          assertTenantAllowsLogin(tenantRecord);
+        }
+
         const { dbPassword, dbUser, dbHost, dbPort, dbName, ...safeTenant } =
           tenantRecord;
         tenant = safeTenant;

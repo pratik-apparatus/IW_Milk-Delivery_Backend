@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { Customer } from '../../entities/customer.entity';
 import { Tenant } from '../../entities/tenant.entity';
 import { TenantDatabaseService } from '../../common/database/tenant-database.service';
+import { assertTenantAllowsLogin } from '../../common/utils/tenant-login.util';
 
 @Injectable()
 export class InternalCustomerService {
@@ -24,6 +25,7 @@ export class InternalCustomerService {
     }
 
     const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    assertTenantAllowsLogin(tenant);
     if (!tenant?.dbName) {
       throw new NotFoundException('Tenant database is not configured');
     }
@@ -61,6 +63,9 @@ export class InternalCustomerService {
     if (!tenantId) {
       throw new NotFoundException('Tenant context is required');
     }
+
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    assertTenantAllowsLogin(tenant);
 
     const repo = await this.customerRepo(tenantId);
     const customer = await repo.findOne({
