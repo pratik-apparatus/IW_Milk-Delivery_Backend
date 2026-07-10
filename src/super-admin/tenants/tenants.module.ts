@@ -9,7 +9,8 @@ import { BillingModule } from '../billing/billing.module';
 import { InternalAuthModule } from '../../internal/auth/internal-auth.module';
 import { TenantsController } from './tenants.controller';
 import { TenantsService } from './tenants.service';
-import { TenantDbService } from './tenant-db.service';
+import { TenantDbModule } from '../tenant-db/tenant-db.module';
+import { ManagedDatabasesModule } from '../databases/managed-databases.module';
 
 @Module({
   imports: [
@@ -17,9 +18,11 @@ import { TenantDbService } from './tenant-db.service';
     InternalAuthModule,
     AdminAuditLogModule,
     BillingModule,
+    TenantDbModule,
+    ManagedDatabasesModule,
   ],
   controllers: [TenantsController],
-  providers: [TenantsService, TenantDbService],
-  exports: [TenantsService, TenantDbService],
+  providers: [TenantsService],
+  exports: [TenantsService],
 })
 export class TenantsModule {}

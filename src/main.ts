@@ -10,6 +10,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { RpcHttpExceptionFilter } from './common/filters/rpc-http-exception.filter';
 import { CategoryModule } from './admin/categories/categories.module';
 import { ProductModule } from './admin/product/product.module';
 import { AdminDeliveryPartnerModule } from './admin/deliveryPartner/deliverypartner.module';
@@ -37,6 +38,7 @@ import { AppConfigModule } from './admin/app-config/app-config.module';
 import { AdminAuditLogModule } from './admin/audit-log/admin-audit-log.module';
 import { HealthModule } from './health/health.module';
 import { TenantsModule } from './super-admin/tenants/tenants.module';
+import { ManagedDatabasesModule } from './super-admin/databases/managed-databases.module';
 import { BillingModule } from './super-admin/billing/billing.module';
 
 async function bootstrap() {
@@ -55,8 +57,8 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Global exception filter
-  app.useGlobalFilters(new HttpExceptionFilter());
+  // Global exception filters
+  app.useGlobalFilters(new RpcHttpExceptionFilter(), new HttpExceptionFilter());
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -100,6 +102,7 @@ async function bootstrap() {
       AdminAuditLogModule,
       HealthModule,
       TenantsModule,
+      ManagedDatabasesModule,
       BillingModule,
     ],
   });

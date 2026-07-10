@@ -8,6 +8,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   Max,
   MaxLength,
@@ -116,6 +117,15 @@ export class CreateTenantDto {
   @ValidateNested()
   @Type(() => TenantIntegrationConfigDto)
   integrationConfig: TenantIntegrationConfigDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Select a pre-created database from the pool (POST /super-admin/databases). Do not combine with inline dbHost/dbName fields.',
+    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  })
+  @IsOptional()
+  @IsUUID()
+  databaseId?: string;
 
   @ApiPropertyOptional({ example: '127.0.0.1' })
   @IsOptional()
