@@ -205,7 +205,10 @@ export class TenantDbService {
       dbPassword: string;
     },
   ): Promise<TenantDbTestResult> {
-    return this.testConnectionForTenant(this.toConnectionTenant(connection), databaseId);
+    return this.testConnectionForTenant(
+      this.toConnectionTenant(connection),
+      databaseId,
+    );
   }
 
   toConnectionTenant(connection: {
@@ -477,9 +480,7 @@ export class TenantDbService {
     return tenant;
   }
 
-  private resolveDbConfig(
-    tenant: Tenant,
-  ): TenantDbConnectionConfig | null {
+  private resolveDbConfig(tenant: Tenant): TenantDbConnectionConfig | null {
     if (!tenant.dbName) {
       return null;
     }

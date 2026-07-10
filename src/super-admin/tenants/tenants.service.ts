@@ -111,18 +111,23 @@ export class TenantsService {
     let managedDatabaseId: string | null = null;
     if (payload.databaseId) {
       const managedDatabase =
-        await this.managedDatabasesService.getAvailableForTenant(payload.databaseId);
+        await this.managedDatabasesService.getAvailableForTenant(
+          payload.databaseId,
+        );
       this.managedDatabasesService.applyConnectionToTenantDraft(
         managedDatabase,
         tenantDraft,
       );
       managedDatabaseId = managedDatabase.id;
     } else {
-      tenantDraft.dbHost = payload.dbHost || this.configService.get('DB_HOST') || null;
+      tenantDraft.dbHost =
+        payload.dbHost || this.configService.get('DB_HOST') || null;
       tenantDraft.dbPort =
         payload.dbPort || Number(this.configService.get('DB_PORT') || 5432);
-      tenantDraft.dbName = payload.dbName || this.buildDefaultDbName(payload.subdomain);
-      tenantDraft.dbUser = this.resolveDbCredential(payload.dbUser, 'DB_USER') || null;
+      tenantDraft.dbName =
+        payload.dbName || this.buildDefaultDbName(payload.subdomain);
+      tenantDraft.dbUser =
+        this.resolveDbCredential(payload.dbUser, 'DB_USER') || null;
       tenantDraft.dbPassword =
         this.resolveDbCredential(payload.dbPassword, 'DB_PASSWORD') || null;
     }
@@ -686,10 +691,10 @@ export class TenantsService {
     const hasDatabaseId = Boolean(payload.databaseId);
     const hasInlineDbConfig = Boolean(
       payload.dbHost ||
-        payload.dbPort ||
-        payload.dbName ||
-        payload.dbUser ||
-        payload.dbPassword,
+      payload.dbPort ||
+      payload.dbName ||
+      payload.dbUser ||
+      payload.dbPassword,
     );
 
     if (hasDatabaseId && hasInlineDbConfig) {

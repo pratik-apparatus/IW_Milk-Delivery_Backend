@@ -31,21 +31,27 @@ import { ManagedDatabasesService } from './managed-databases.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('SUPER_ADMIN')
 export class ManagedDatabasesController {
-  constructor(private readonly managedDatabasesService: ManagedDatabasesService) {}
+  constructor(
+    private readonly managedDatabasesService: ManagedDatabasesService,
+  ) {}
 
   @Post()
   @ApiOperation({
     summary: 'Create a standalone tenant database (no tenant required)',
   })
   @ApiBody({ type: CreateManagedDatabaseDto })
-  @ApiResponse({ status: 201, description: 'Database created and registered as AVAILABLE' })
+  @ApiResponse({
+    status: 201,
+    description: 'Database created and registered as AVAILABLE',
+  })
   create(@Body() payload: CreateManagedDatabaseDto) {
     return this.managedDatabasesService.create(payload);
   }
 
   @Get()
   @ApiOperation({
-    summary: 'List managed databases (filter by AVAILABLE to pick one for tenant creation)',
+    summary:
+      'List managed databases (filter by AVAILABLE to pick one for tenant creation)',
   })
   @ApiResponse({ status: 200, description: 'Managed database list fetched' })
   findAll(@Query() query: ManagedDatabaseQueryDto) {
@@ -70,7 +76,9 @@ export class ManagedDatabasesController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete managed database and drop PostgreSQL database' })
+  @ApiOperation({
+    summary: 'Delete managed database and drop PostgreSQL database',
+  })
   @ApiParam({ name: 'id', description: 'Managed database ID' })
   @ApiResponse({ status: 200, description: 'Managed database deleted' })
   remove(@Param('id') id: string) {

@@ -135,11 +135,16 @@ function parseArgs(argv: string[]): CliOptions {
 }
 
 function normalize(value?: string | null): string {
-  return (value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+  return (value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
 }
 
 function buildAliasSet(primary: string, aliases?: string[]): Set<string> {
-  return new Set([primary, ...(aliases || [])].map((value) => normalize(value)));
+  return new Set(
+    [primary, ...(aliases || [])].map((value) => normalize(value)),
+  );
 }
 
 async function copySeedImage(
@@ -182,7 +187,10 @@ async function run() {
         item.categoryName,
         item.categoryAliases,
       );
-      const productAliases = buildAliasSet(item.productName, item.productAliases);
+      const productAliases = buildAliasSet(
+        item.productName,
+        item.productAliases,
+      );
 
       const existingCategory =
         existingCategories.find((category) =>
@@ -239,7 +247,10 @@ async function run() {
         item.categoryName,
         item.categoryAliases,
       );
-      const productAliases = buildAliasSet(item.productName, item.productAliases);
+      const productAliases = buildAliasSet(
+        item.productName,
+        item.productAliases,
+      );
 
       let category =
         currentCategories.find((entry) =>
@@ -273,8 +284,9 @@ async function run() {
       }
 
       let product =
-        currentProducts.find((entry) => productAliases.has(normalize(entry.name))) ||
-        null;
+        currentProducts.find((entry) =>
+          productAliases.has(normalize(entry.name)),
+        ) || null;
 
       const productImage = await copySeedImage(
         item.sourceImage,

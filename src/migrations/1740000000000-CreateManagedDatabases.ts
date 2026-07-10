@@ -56,6 +56,8 @@ export class CreateManagedDatabases1740000000000 implements MigrationInterface {
       ALTER TABLE "tenants" DROP COLUMN IF EXISTS "managedDatabaseId"
     `);
     await queryRunner.query(`DROP TABLE IF EXISTS "managed_databases"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "managed_databases_status_enum"`);
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "managed_databases_status_enum"`,
+    );
   }
 }

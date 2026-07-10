@@ -203,8 +203,13 @@ export class ManagedDatabasesService {
 
   private resolveConnection(payload: CreateManagedDatabaseDto) {
     return {
-      dbHost: payload.dbHost || this.configService.get<string>('DB_HOST') || 'localhost',
-      dbPort: payload.dbPort || Number(this.configService.get<string>('DB_PORT') || 5432),
+      dbHost:
+        payload.dbHost ||
+        this.configService.get<string>('DB_HOST') ||
+        'localhost',
+      dbPort:
+        payload.dbPort ||
+        Number(this.configService.get<string>('DB_PORT') || 5432),
       dbName: payload.dbName.trim(),
       dbUser:
         payload.dbUser?.trim() ||

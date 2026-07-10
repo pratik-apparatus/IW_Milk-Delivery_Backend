@@ -26,11 +26,7 @@ export class InternalAuthService {
     private readonly tenantSubscriptionService: TenantSubscriptionService,
   ) {}
 
-  async getLoginData(
-    identifier: string,
-    role: Role,
-    tenantId?: string | null,
-  ) {
+  async getLoginData(identifier: string, role: Role, tenantId?: string | null) {
     this.logger.log(
       `Getting login data for identifier: ${identifier}, role: ${role}`,
     );

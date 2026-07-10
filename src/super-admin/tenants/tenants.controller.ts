@@ -41,7 +41,8 @@ export class TenantsController {
 
   @Post()
   @ApiOperation({
-    summary: 'Create and provision a new tenant (optionally pass databaseId from the database pool)',
+    summary:
+      'Create and provision a new tenant (optionally pass databaseId from the database pool)',
   })
   @ApiResponse({
     status: 201,
