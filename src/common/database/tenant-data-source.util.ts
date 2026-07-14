@@ -23,18 +23,30 @@ export interface TenantDataSourceOptions {
   includeMigrations?: boolean;
 }
 
+/**
+ * Resolve the Postgres connection for a tenant / managed-database record.
+ *
+ * Prefer the explicit connection stored on the record (form / pool / tenant).
+ * TENANT_DB_* is only a fallback when the record has no host/user/password —
+ * used by migration scripts via createPseudoTenantForDirectMigration().
+ * Do NOT let TENANT_DB_HOST override a remote host entered in the panel,
+ * or CREATE DATABASE will hit localhost while the pool shows DB_HOST.
+ */
 export function resolveTenantDbConnection(
   tenant: Tenant,
   env: NodeJS.ProcessEnv = process.env,
 ): TenantDbConnectionConfig {
   return {
-    host: env.TENANT_DB_HOST || tenant.dbHost || env.DB_HOST || 'localhost',
-    port: Number(env.TENANT_DB_PORT || tenant.dbPort || env.DB_PORT || 5432),
+    host: tenant.dbHost || env.TENANT_DB_HOST || env.DB_HOST || 'localhost',
+    port: Number(tenant.dbPort || env.TENANT_DB_PORT || env.DB_PORT || 5432),
     username:
-      env.TENANT_DB_USER || tenant.dbUser?.trim() || env.DB_USER || 'postgres',
+      tenant.dbUser?.trim() ||
+      env.TENANT_DB_USER ||
+      env.DB_USER ||
+      'postgres',
     password:
-      env.TENANT_DB_PASSWORD ||
       tenant.dbPassword?.trim() ||
+      env.TENANT_DB_PASSWORD ||
       env.DB_PASSWORD ||
       'postgres',
     database: tenant.dbName!,

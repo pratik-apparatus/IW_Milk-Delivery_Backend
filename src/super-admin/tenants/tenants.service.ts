@@ -82,19 +82,27 @@ export class TenantsService {
     }
 
     this.assertDatabaseSource(payload);
+    this.assertDeliveryZoneForApps(payload);
     await this.assertAdminIdentityAvailable(payload);
+
+    const enabledApps = parseEnabledApps(payload.enabledApps);
+    const deliveryEnabled = enabledApps.includes('DELIVERY_APP');
 
     const tenantDraft = this.tenantRepo.create({
       businessName: payload.businessName,
       subdomain: payload.subdomain,
       status: TenantStatus.INACTIVE,
-      enabledApps: parseEnabledApps(payload.enabledApps),
+      enabledApps,
       appSettings: payload.appSettings || {},
       integrationConfig: normalizeIntegrationConfig(payload.integrationConfig),
       adminAddress: payload.adminAddress,
-      adminLatitude: payload.adminLatitude,
-      adminLongitude: payload.adminLongitude,
-      deliveryRadiusKm: payload.deliveryRadiusKm,
+      adminLatitude: deliveryEnabled ? (payload.adminLatitude ?? null) : null,
+      adminLongitude: deliveryEnabled
+        ? (payload.adminLongitude ?? null)
+        : null,
+      deliveryRadiusKm: deliveryEnabled
+        ? (payload.deliveryRadiusKm ?? null)
+        : null,
       suspensionReason: null,
       logoUrl: payload.logoUrl || null,
       adminEmail: payload.adminEmail,
@@ -232,6 +240,19 @@ export class TenantsService {
       tenant.enabledApps = parseEnabledApps(enabledApps);
     }
 
+    if (!tenant.enabledApps.includes('DELIVERY_APP')) {
+      tenant.adminLatitude = null;
+      tenant.adminLongitude = null;
+      tenant.deliveryRadiusKm = null;
+    } else {
+      this.assertDeliveryZoneConfigured(
+        tenant.enabledApps,
+        tenant.adminLatitude,
+        tenant.adminLongitude,
+        tenant.deliveryRadiusKm,
+      );
+    }
+
     if (integrationConfig !== undefined) {
       const existing = (tenant.integrationConfig || {}) as Record<
         string,
@@ -295,6 +316,19 @@ export class TenantsService {
     tenant.enabledApps = parseEnabledApps(payload.enabledApps);
     if (payload.appSettings) {
       tenant.appSettings = payload.appSettings;
+    }
+
+    if (!tenant.enabledApps.includes('DELIVERY_APP')) {
+      tenant.adminLatitude = null;
+      tenant.adminLongitude = null;
+      tenant.deliveryRadiusKm = null;
+    } else {
+      this.assertDeliveryZoneConfigured(
+        tenant.enabledApps,
+        tenant.adminLatitude,
+        tenant.adminLongitude,
+        tenant.deliveryRadiusKm,
+      );
     }
 
     const updated = await this.tenantRepo.save(tenant);
@@ -700,6 +734,40 @@ export class TenantsService {
     if (hasDatabaseId && hasInlineDbConfig) {
       throw new BadRequestException(
         'Use either databaseId (pre-created pool database) or inline dbHost/dbName fields, not both',
+      );
+    }
+  }
+
+  private assertDeliveryZoneForApps(payload: CreateTenantDto) {
+    const enabledApps = parseEnabledApps(payload.enabledApps);
+    this.assertDeliveryZoneConfigured(
+      enabledApps,
+      payload.adminLatitude,
+      payload.adminLongitude,
+      payload.deliveryRadiusKm,
+    );
+  }
+
+  private assertDeliveryZoneConfigured(
+    enabledApps: string[],
+    adminLatitude?: number | null,
+    adminLongitude?: number | null,
+    deliveryRadiusKm?: number | null,
+  ) {
+    if (!enabledApps.includes('DELIVERY_APP')) {
+      return;
+    }
+
+    if (
+      adminLatitude == null ||
+      Number.isNaN(Number(adminLatitude)) ||
+      adminLongitude == null ||
+      Number.isNaN(Number(adminLongitude)) ||
+      deliveryRadiusKm == null ||
+      Number.isNaN(Number(deliveryRadiusKm))
+    ) {
+      throw new BadRequestException(
+        'Delivery zone (latitude, longitude, and radius) is required when DELIVERY_APP is enabled. Set the depot location on the map.',
       );
     }
   }

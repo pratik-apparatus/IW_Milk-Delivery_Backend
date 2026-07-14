@@ -55,36 +55,48 @@ export class CreateTenantDto {
 
   @ApiProperty({
     example: 'Kharadi, Pune, Maharashtra',
-    description: 'Business / depot address used as delivery zone center',
+    description: 'Business / depot address',
   })
   @IsString()
   @MinLength(5)
   @MaxLength(500)
   adminAddress: string;
 
-  @ApiProperty({ example: 18.5515, description: 'Admin depot latitude' })
+  @ApiPropertyOptional({
+    example: 18.5515,
+    description:
+      'Depot latitude. Required when DELIVERY_APP is enabled; set via map in the superadmin panel.',
+  })
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(-90)
   @Max(90)
-  adminLatitude: number;
+  adminLatitude?: number;
 
-  @ApiProperty({ example: 73.9234, description: 'Admin depot longitude' })
+  @ApiPropertyOptional({
+    example: 73.9234,
+    description:
+      'Depot longitude. Required when DELIVERY_APP is enabled; set via map in the superadmin panel.',
+  })
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(-180)
   @Max(180)
-  adminLongitude: number;
+  adminLongitude?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 5,
-    description: 'Delivery radius in km from admin location',
+    description:
+      'Delivery radius in km from depot. Required when DELIVERY_APP is enabled.',
   })
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0.5)
   @Max(100)
-  deliveryRadiusKm: number;
+  deliveryRadiusKm?: number;
 
   @ApiPropertyOptional({
     example: ['DELIVERY_APP', 'SUBSCRIPTIONS_MODULE'],
