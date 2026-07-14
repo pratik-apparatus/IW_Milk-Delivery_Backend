@@ -97,9 +97,7 @@ export class TenantsService {
       integrationConfig: normalizeIntegrationConfig(payload.integrationConfig),
       adminAddress: payload.adminAddress,
       adminLatitude: deliveryEnabled ? (payload.adminLatitude ?? null) : null,
-      adminLongitude: deliveryEnabled
-        ? (payload.adminLongitude ?? null)
-        : null,
+      adminLongitude: deliveryEnabled ? (payload.adminLongitude ?? null) : null,
       deliveryRadiusKm: deliveryEnabled
         ? (payload.deliveryRadiusKm ?? null)
         : null,

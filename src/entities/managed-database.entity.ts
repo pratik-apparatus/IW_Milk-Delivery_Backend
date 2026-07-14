@@ -16,7 +16,7 @@ export class ManagedDatabase {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 150, nullable: true,unique:true })
+  @Column({ type: 'varchar', length: 150, nullable: true, unique: true })
   displayName: string | null;
 
   @Column({ type: 'varchar' })
@@ -25,7 +25,7 @@ export class ManagedDatabase {
   @Column({ type: 'int' })
   dbPort: number;
 
-  @Column({ type: 'varchar',unique:true })
+  @Column({ type: 'varchar', unique: true })
   dbName: string;
 
   @Column({ type: 'varchar' })
