@@ -14,8 +14,16 @@ import { MailClientService } from './mail-client.service';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host: configService.get<string>('MAIL_MS_HOST') || '127.0.0.1',
-            port: Number(configService.get<string>('MAIL_MS_PORT') || 4003),
+            // TCP microservice host/port (not MAIL_SERVICE_URL HTTP)
+            host:
+              configService.get<string>('MAIL_MS_HOST') ||
+              configService.get<string>('MAIL_HOST') ||
+              '127.0.0.1',
+            port: Number(
+              configService.get<string>('MAIL_MS_PORT') ||
+                configService.get<string>('MAIL_PORT') ||
+                4003,
+            ),
           },
         }),
         inject: [ConfigService],
