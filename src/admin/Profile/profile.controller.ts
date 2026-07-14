@@ -4,11 +4,12 @@ import type { Request } from 'express';
 import { AdminProfileService } from './profile.services';
 import { UpdateAdminProfileDto } from '../../dto/admin-profile.dto';
 import { CurrentUser } from '../../auth/current-user.decorator';
-import { AdminProtected } from '../../auth/admin-protected.decorator';
+import { AdminBillingProtected } from '../../auth/admin-protected.decorator';
 import { Tenant } from '../../entities/tenant.entity';
 
 @ApiTags('Admin | Profile')
-@AdminProtected()
+/** Profile must work even when no SaaS plan is assigned yet. */
+@AdminBillingProtected()
 @Controller('admin/profile')
 export class AdminProfileController {
   constructor(private readonly profileService: AdminProfileService) {}

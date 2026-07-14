@@ -24,9 +24,16 @@ export class MailClientService {
       data,
     };
 
-    return firstValueFrom(
-      this.mailClient.send<T>(pattern, envelope).pipe(timeout(10000)),
-    );
+    try {
+      return await firstValueFrom(
+        this.mailClient.send<T>(pattern, envelope).pipe(timeout(15000)),
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `Mail RPC failed for ${JSON.stringify(pattern)}: ${error?.message || error}`,
+      );
+      throw error;
+    }
   }
 
   async sendTenantCredentials(payload: {
@@ -37,6 +44,9 @@ export class MailClientService {
     adminPanelUrl?: string;
     subdomain?: string;
   }) {
+    this.logger.log(
+      `Sending tenant credentials email to ${payload.to} (${payload.businessName})`,
+    );
     return this.send(MailPatterns.SEND_TENANT_CREDENTIALS, payload);
   }
 

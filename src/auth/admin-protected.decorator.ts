@@ -33,7 +33,11 @@ export function AdminProtected() {
   );
 }
 
-/** Admin auth without subscription gate — for billing/payment endpoints. */
+/**
+ * Admin auth without subscription gate.
+ * Use for profile, billing/payment, and other endpoints that must remain
+ * reachable when no plan is assigned or payment is pending.
+ */
 export function AdminBillingProtected() {
   return applyDecorators(
     ApiBearerAuth(),
