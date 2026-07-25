@@ -26,6 +26,18 @@ export class Tenant {
   @Column({ type: 'varchar', nullable: true })
   logoUrl: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  aadharFrontUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  aadharBackUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  panCardUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  fssaiLicenseUrl: string | null;
+
   @Column({ type: 'varchar' })
   adminEmail: string;
 
