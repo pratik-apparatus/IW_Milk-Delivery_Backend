@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,14 +8,23 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { mkdirSync } from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { Roles } from '../../auth/roles.decorator';
 import { RolesGuard } from '../../auth/roles.guard';
@@ -27,6 +37,44 @@ import { ProvisionTenantDto } from './dto/provision-tenant.dto';
 import { TenantsService } from './tenants.service';
 import { AdminAuditLogService } from '../../admin/audit-log/admin-audit-log.service';
 import { toAdminAuditLogListResponse } from '../../admin/audit-log/admin-audit-log.mapper';
+
+mkdirSync('./uploads/tenant-documents', { recursive: true });
+
+const tenantDocumentStorage = diskStorage({
+  destination: './uploads/tenant-documents',
+  filename: (_req, file, callback) => {
+    callback(null, `${uuidv4()}${extname(file.originalname)}`);
+  },
+});
+
+const allowedDocumentExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
+const allowedDocumentMimes = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+];
+
+function tenantDocumentFileFilter(
+  _req: unknown,
+  file: Express.Multer.File,
+  callback: (error: Error | null, acceptFile: boolean) => void,
+) {
+  const fileExt = extname(file.originalname).toLowerCase();
+  if (
+    !allowedDocumentExtensions.includes(fileExt) ||
+    !allowedDocumentMimes.includes(file.mimetype)
+  ) {
+    return callback(
+      new BadRequestException(
+        'Only JPG, PNG, WEBP, and PDF files are allowed for KYC documents',
+      ),
+      false,
+    );
+  }
+  callback(null, true);
+}
 
 @ApiTags('Super Admin | Tenants')
 @ApiBearerAuth()
@@ -94,6 +142,73 @@ export class TenantsController {
   @ApiResponse({ status: 200, description: 'Tenant updated successfully' })
   update(@Param('id') id: string, @Body() payload: UpdateTenantDto) {
     return this.tenantsService.update(id, payload);
+  }
+
+  @Post(':id/kyc-documents')
+  @ApiOperation({
+    summary:
+      'Upload tenant KYC documents (Aadhaar front/back, PAN, FSSAI license)',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        aadharFront: { type: 'string', format: 'binary' },
+        aadharBack: { type: 'string', format: 'binary' },
+        panCard: { type: 'string', format: 'binary' },
+        fssaiLicense: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'KYC documents uploaded' })
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'aadharFront', maxCount: 1 },
+        { name: 'aadharBack', maxCount: 1 },
+        { name: 'panCard', maxCount: 1 },
+        { name: 'fssaiLicense', maxCount: 1 },
+      ],
+      {
+        storage: tenantDocumentStorage,
+        fileFilter: tenantDocumentFileFilter,
+        limits: { fileSize: 5 * 1024 * 1024 },
+      },
+    ),
+  )
+  uploadKycDocuments(
+    @Param('id') id: string,
+    @UploadedFiles()
+    files: {
+      aadharFront?: Express.Multer.File[];
+      aadharBack?: Express.Multer.File[];
+      panCard?: Express.Multer.File[];
+      fssaiLicense?: Express.Multer.File[];
+    },
+  ) {
+    const toUrl = (file?: Express.Multer.File) =>
+      file ? `/uploads/tenant-documents/${file.filename}` : undefined;
+
+    const documents = {
+      aadharFrontUrl: toUrl(files?.aadharFront?.[0]),
+      aadharBackUrl: toUrl(files?.aadharBack?.[0]),
+      panCardUrl: toUrl(files?.panCard?.[0]),
+      fssaiLicenseUrl: toUrl(files?.fssaiLicense?.[0]),
+    };
+
+    if (
+      !documents.aadharFrontUrl &&
+      !documents.aadharBackUrl &&
+      !documents.panCardUrl &&
+      !documents.fssaiLicenseUrl
+    ) {
+      throw new BadRequestException(
+        'At least one KYC document file is required',
+      );
+    }
+
+    return this.tenantsService.updateKycDocuments(id, documents);
   }
 
   @Patch(':id/status')

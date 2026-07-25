@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -53,8 +54,10 @@ type AdminUserProvisionResult = {
 };
 
 @Injectable()
-export class TenantsService {
+export class TenantsService implements OnModuleInit {
   private readonly logger = new Logger(TenantsService.name);
+  private kycColumnsEnsured = false;
+
   constructor(
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
@@ -72,6 +75,16 @@ export class TenantsService {
     private readonly tenantSubscriptionService: TenantSubscriptionService,
     private readonly managedDatabasesService: ManagedDatabasesService,
   ) {}
+
+  async onModuleInit() {
+    try {
+      await this.ensureKycDocumentColumns();
+    } catch (error) {
+      this.logger.warn(
+        `Could not ensure KYC document columns: ${String(error)}`,
+      );
+    }
+  }
 
   async create(payload: CreateTenantDto) {
     const exists = await this.tenantRepo.findOne({
@@ -103,6 +116,10 @@ export class TenantsService {
         : null,
       suspensionReason: null,
       logoUrl: payload.logoUrl || null,
+      aadharFrontUrl: null,
+      aadharBackUrl: null,
+      panCardUrl: null,
+      fssaiLicenseUrl: null,
       adminEmail: payload.adminEmail,
       supportEmail: payload.supportEmail || null,
       supportPhone: payload.supportPhone || null,
@@ -277,6 +294,40 @@ export class TenantsService {
           ...incomingRazorpay,
         },
       });
+    }
+
+    const updated = await this.tenantRepo.save(tenant);
+    this.emitTenantEvent(TenantLifecycleEventType.TENANT_UPDATED, updated.id);
+    return this.sanitizeTenant(updated);
+  }
+
+  async updateKycDocuments(
+    id: string,
+    documents: {
+      aadharFrontUrl?: string;
+      aadharBackUrl?: string;
+      panCardUrl?: string;
+      fssaiLicenseUrl?: string;
+    },
+  ) {
+    await this.ensureKycDocumentColumns();
+
+    const tenant = await this.tenantRepo.findOne({ where: { id } });
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+
+    if (documents.aadharFrontUrl) {
+      tenant.aadharFrontUrl = documents.aadharFrontUrl;
+    }
+    if (documents.aadharBackUrl) {
+      tenant.aadharBackUrl = documents.aadharBackUrl;
+    }
+    if (documents.panCardUrl) {
+      tenant.panCardUrl = documents.panCardUrl;
+    }
+    if (documents.fssaiLicenseUrl) {
+      tenant.fssaiLicenseUrl = documents.fssaiLicenseUrl;
     }
 
     const updated = await this.tenantRepo.save(tenant);
@@ -595,6 +646,26 @@ export class TenantsService {
   private sanitizeTenant(tenant: Tenant) {
     const { dbPassword, ...safeTenant } = tenant;
     return safeTenant;
+  }
+
+  /** Adds KYC URL columns when migrations are not used (DB_SYNC off). */
+  private async ensureKycDocumentColumns() {
+    if (this.kycColumnsEnsured) {
+      return;
+    }
+
+    const statements = [
+      `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS "aadharFrontUrl" varchar`,
+      `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS "aadharBackUrl" varchar`,
+      `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS "panCardUrl" varchar`,
+      `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS "fssaiLicenseUrl" varchar`,
+    ];
+
+    for (const sql of statements) {
+      await this.tenantRepo.query(sql);
+    }
+
+    this.kycColumnsEnsured = true;
   }
 
   private async assertReprovisionAllowed(
