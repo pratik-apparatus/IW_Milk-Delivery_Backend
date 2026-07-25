@@ -1,13 +1,12 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { Tenant } from '../../entities/tenant.entity';
 import { TENANT_BUSINESS_ENTITIES } from './tenant-database.config';
-import { getTypeOrmLogging } from './typeorm-options.util';
-import {
-  TENANT_MIGRATIONS,
-  TENANT_MIGRATIONS_TABLE,
-} from '../../tenant-migrations/tenant-migrations.registry';
 
-export { TENANT_MIGRATIONS_TABLE };
+/** Table used by TypeORM when tenant migrations are registered (currently none in-repo). */
+export const TENANT_MIGRATIONS_TABLE = 'tenant_migrations';
+
+/** Keep empty — schema changes are applied via DB sync / ops, not committed migration files. */
+const TENANT_MIGRATIONS: Function[] = [];
 
 export interface TenantDbConnectionConfig {
   host: string;
