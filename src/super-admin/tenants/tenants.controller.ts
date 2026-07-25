@@ -203,7 +203,9 @@ export class TenantsController {
       !documents.panCardUrl &&
       !documents.fssaiLicenseUrl
     ) {
-      throw new BadRequestException('At least one KYC document file is required');
+      throw new BadRequestException(
+        'At least one KYC document file is required',
+      );
     }
 
     return this.tenantsService.updateKycDocuments(id, documents);
