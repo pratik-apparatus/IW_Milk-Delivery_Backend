@@ -94,12 +94,10 @@ export class PdfInvoiceRenderer {
         width: right - left,
       });
       y += 14;
-      doc
-        .fillColor('#059669')
-        .text(input.status.toUpperCase(), left, y, {
-          align: 'right',
-          width: right - left,
-        });
+      doc.fillColor('#059669').text(input.status.toUpperCase(), left, y, {
+        align: 'right',
+        width: right - left,
+      });
 
       y += 28;
       doc
@@ -153,9 +151,7 @@ export class PdfInvoiceRenderer {
       y += Math.max(billHeight, fromHeight) + 28;
 
       // Table header
-      doc
-        .rect(left, y, right - left, 24)
-        .fill('#F9FAFB');
+      doc.rect(left, y, right - left, 24).fill('#F9FAFB');
 
       let x = left + 10;
       doc.font('Helvetica-Bold').fontSize(8).fillColor('#6B7280');
@@ -292,7 +288,11 @@ export class PdfInvoiceRenderer {
         const relative = logoUrl.replace(/^\//, '');
         const candidates = [
           path.join(process.cwd(), relative),
-          path.join(process.cwd(), 'uploads', relative.replace(/^uploads[\\/]/, '')),
+          path.join(
+            process.cwd(),
+            'uploads',
+            relative.replace(/^uploads[\\/]/, ''),
+          ),
           path.join(__dirname, '..', '..', '..', relative),
         ];
         for (const candidate of candidates) {

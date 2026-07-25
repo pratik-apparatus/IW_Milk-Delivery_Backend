@@ -8,10 +8,9 @@ export class CustomerInvoiceTemplate {
 
   render(invoice: SubscriptionInvoice): Promise<Buffer> {
     const item = invoice.lineItemsSnapshot[0];
-    const days =
-      item?.selectedDays?.length
-        ? item.selectedDays.join(', ')
-        : 'All scheduled days';
+    const days = item?.selectedDays?.length
+      ? item.selectedDays.join(', ')
+      : 'All scheduled days';
     const period = [
       this.renderer.formatDate(item?.startDate),
       this.renderer.formatDate(item?.endDate),

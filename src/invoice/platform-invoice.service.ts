@@ -217,10 +217,7 @@ export class PlatformInvoiceService {
     return d.toISOString().slice(0, 10);
   }
 
-  private formatPeriod(
-    start: Date | null,
-    end: Date | null,
-  ): string | null {
+  private formatPeriod(start: Date | null, end: Date | null): string | null {
     if (!start && !end) return null;
     const a = this.toIsoDate(start) || '—';
     const b = this.toIsoDate(end) || '—';
