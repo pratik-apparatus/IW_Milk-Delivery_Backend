@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   Injectable,
   NestInterceptor,
+  StreamableFile,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -22,8 +23,17 @@ export class TenantResponseInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    return next
-      .handle()
-      .pipe(map((data) => enrichWithTenantId(data, tenantId)));
+    return next.handle().pipe(
+      map((data) => {
+        if (
+          data instanceof StreamableFile ||
+          Buffer.isBuffer(data) ||
+          data instanceof Uint8Array
+        ) {
+          return data;
+        }
+        return enrichWithTenantId(data, tenantId);
+      }),
+    );
   }
 }

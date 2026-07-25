@@ -28,6 +28,8 @@
     "migration:platform:run:dev": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register src/scripts/run-platform-migrations.ts",
     "migration:tenant:run": "cross-env NODE_ENV=production ts-node -r tsconfig-paths/register src/scripts/run-tenant-migrations.ts",
     "migration:tenant:run:dev": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register src/scripts/run-tenant-migrations.ts",
+    "seed:invoices": "cross-env NODE_ENV=production ts-node -r tsconfig-paths/register src/scripts/seed-invoices.ts",
+    "seed:invoices:dev": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register src/scripts/seed-invoices.ts",
     "cleanup:platform-db": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register src/scripts/cleanup-platform-db.ts",
     "migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d src/dataSource/data-source.ts",
     "migration:show": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:show -d src/dataSource/data-source.ts"
