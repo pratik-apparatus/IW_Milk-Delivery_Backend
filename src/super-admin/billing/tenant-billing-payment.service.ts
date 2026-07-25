@@ -20,6 +20,7 @@ import {
   addSubscriptionDays,
   syncSubscriptionExpiry,
 } from './tenant-subscription.util';
+import { PlatformInvoiceService } from '../../invoice/platform-invoice.service';
 
 const Razorpay = require('razorpay');
 
@@ -38,6 +39,7 @@ export class TenantBillingPaymentService {
     private readonly planRepo: Repository<TenantPlan>,
     @InjectRepository(TenantSubscription)
     private readonly subscriptionRepo: Repository<TenantSubscription>,
+    private readonly platformInvoiceService: PlatformInvoiceService,
   ) {
     this.keyId = (
       this.configService.get<string>('RAZORPAY_KEY_ID') || ''
@@ -242,6 +244,18 @@ export class TenantBillingPaymentService {
     }
 
     await this.subscriptionRepo.save(subscription);
+
+    try {
+      await this.platformInvoiceService.createForTenantSubscription(
+        subscription,
+        plan,
+      );
+    } catch (err) {
+      this.logger.error(
+        `Failed to create platform invoice for tenant ${subscription.tenantId}`,
+        err instanceof Error ? err.stack : String(err),
+      );
+    }
 
     return {
       success: true,

@@ -14,6 +14,7 @@ import { DeliveryPartnerLocation } from '../../entities/delivery-partner-locatio
 import { Banner } from '../../entities/banner.entity';
 import { AppConfig } from '../../entities/app-config.entity';
 import { AdminAuditLog } from '../../entities/admin-audit-log.entity';
+import { SubscriptionInvoice } from '../../entities/subscription-invoice.entity';
 
 /** Business tables that live in a tenant's own database when dbName is configured. */
 export const TENANT_BUSINESS_ENTITIES = [
@@ -33,6 +34,7 @@ export const TENANT_BUSINESS_ENTITIES = [
   Banner,
   AppConfig,
   AdminAuditLog,
+  SubscriptionInvoice,
 ];
 
 /** Postgres table names for tenant business entities (for platform DB cleanup migrations). */
@@ -42,6 +44,7 @@ export const TENANT_BUSINESS_TABLES = [
   'delivery_partner_locations',
   'wallet_transaction',
   'admin_audit_logs',
+  'subscription_invoices',
   'cart',
   'payment',
   'order',

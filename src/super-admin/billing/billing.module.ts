@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Tenant } from '../../entities/tenant.entity';
 import { TenantPlan } from '../../entities/tenant-plan.entity';
@@ -10,9 +10,13 @@ import { TenantSubscriptionController } from './tenant-subscription.controller';
 import { TenantSubscriptionService } from './tenant-subscription.service';
 import { TenantBillingPaymentService } from './tenant-billing-payment.service';
 import { BillingWebhookController } from './billing-webhook.controller';
+import { InvoiceModule } from '../../invoice/invoice.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Tenant, TenantPlan, TenantSubscription])],
+  imports: [
+    TypeOrmModule.forFeature([Tenant, TenantPlan, TenantSubscription]),
+    forwardRef(() => InvoiceModule),
+  ],
   controllers: [
     TenantPlanController,
     TenantSubscriptionController,

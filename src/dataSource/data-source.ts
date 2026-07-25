@@ -11,7 +11,8 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   entities: PLATFORM_ENTITIES,
-  migrations: ['src/migrations/*.ts'],
+  // Migration files are not kept in-repo; leave empty to avoid missing-path errors.
+  migrations: [],
   migrationsTableName: 'migrations',
   synchronize: false,
   logging: process.env.DB_LOGGING === 'true' ? ['query', 'error'] : ['error'],

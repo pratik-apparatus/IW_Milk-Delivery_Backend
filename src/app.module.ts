@@ -42,6 +42,7 @@ import { HealthModule } from './health/health.module';
 import { TenantsModule } from './super-admin/tenants/tenants.module';
 import { BillingModule } from './super-admin/billing/billing.module';
 import { MicroservicesModule } from './microservices/microservices.module';
+import { InvoiceModule } from './invoice/invoice.module';
 import { TenantContextMiddleware } from './common/middleware/tenant-context.middleware';
 import { EnabledAppsMiddleware } from './common/middleware/enabled-apps.middleware';
 import { getConfigModuleOptions } from './config/load-env';
@@ -101,6 +102,7 @@ import {
     HealthModule,
     TenantsModule,
     BillingModule,
+    InvoiceModule,
     MicroservicesModule,
     ThrottlerModule.forRoot([
       {
