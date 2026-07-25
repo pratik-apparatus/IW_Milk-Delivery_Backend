@@ -1,3 +1,5 @@
+import { StreamableFile } from '@nestjs/common';
+
 const SKIP_RECURSE_KEYS = new Set(['meta', 'pagination', 'tokens', 'billing']);
 
 /** Fill null tenantId on API payloads when data lives in a dedicated tenant database. */
@@ -7,6 +9,15 @@ export function enrichWithTenantId<T>(
   depth = 0,
 ): T {
   if (!tenantId || value === null || value === undefined || depth > 6) {
+    return value;
+  }
+
+  // Never mutate binary download responses (invoice PDFs, etc.).
+  if (
+    value instanceof StreamableFile ||
+    Buffer.isBuffer(value) ||
+    value instanceof Uint8Array
+  ) {
     return value;
   }
 

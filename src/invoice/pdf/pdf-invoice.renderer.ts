@@ -2,11 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
-import PDFDocument from 'pdfkit';
 import {
   InvoiceBillToSnapshot,
   InvoiceIssuerSnapshot,
 } from '../../entities/subscription-invoice.entity';
+
+// pdfkit is CJS; default import can break under Nest/NodeNext and corrupt PDFs.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const PDFDocument = require('pdfkit') as typeof import('pdfkit');
 
 export interface InvoiceTableColumn {
   key: string;
