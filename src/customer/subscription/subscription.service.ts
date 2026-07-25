@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { TenantRepositoryService } from '../../common/database/tenant-repository.service';
 import {
@@ -23,13 +24,17 @@ import {
   applyTenantFilter,
   tenantWhere,
 } from '../../common/utils/tenant-scope.util';
+import { CustomerInvoiceService } from '../../invoice/customer-invoice.service';
 
 @Injectable()
 export class SubscriptionService {
+  private readonly logger = new Logger(SubscriptionService.name);
+
   constructor(
     private readonly tenantRepos: TenantRepositoryService,
     private readonly walletService: WalletService,
     private readonly tenantContext: TenantContextService,
+    private readonly customerInvoiceService: CustomerInvoiceService,
   ) {}
 
   /**
@@ -189,6 +194,20 @@ export class SubscriptionService {
       savedSubscription.id,
       `Subscription started for ${product.name} - ${dto.planType} (${totalDeliveries} deliveries)`,
     );
+
+    try {
+      await this.customerInvoiceService.createForSubscription(
+        savedSubscription,
+        product,
+        customer,
+      );
+    } catch (err) {
+      // Invoice failure must not roll back a paid subscription.
+      this.logger.error(
+        `Failed to create subscription invoice for ${savedSubscription.id}`,
+        err instanceof Error ? err.stack : String(err),
+      );
+    }
 
     // Return subscription with product relation and calculated remainingDeliveries
     const subscriptionWithProduct = await subscriptionRepo.findOne({
